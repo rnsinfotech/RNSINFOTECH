@@ -1,0 +1,281 @@
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Manrope:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "./tokens.css";
+@import "./primitives.css";
+
+* { box-sizing: border-box; }
+html {
+  scroll-behavior: smooth;
+  /* Stops Safari/Chrome on mobile from silently bumping up font sizes
+     on rotation/zoom, which shifts line-wraps and makes the page feel
+     like it's "moving" between portrait/landscape or after a pinch. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Belt-and-braces: nothing in this app should ever need horizontal
+     scroll. If any element momentarily overflows the viewport width
+     (long unbroken strings, a stray fixed-width child, etc.) this stops
+     it from turning into page-wide rubber-band scrolling on mobile,
+     which is what reads as the whole site "moving around".
+     IMPORTANT: this lives on <html> ONLY — not body, and not #root.
+     Setting overflow-x anywhere on the ancestor chain between <html>
+     and the sticky navbar (body, #root, any wrapper div) makes the
+     browser compute that ancestor's overflow-y as "auto", which turns
+     it into its own scroll container. Since that container never
+     actually scrolls itself (the real scrolling happens on <html>),
+     any position: sticky descendant "sticks" relative to a container
+     that never moves — which looks identical to sticky not working at
+     all. <html> is the one exception: it IS the real scrolling root,
+     so this is the only safe place for this rule. */
+  overflow-x: hidden;
+}
+
+/* Any in-page anchor target (section ids, #warranty, etc.) should stop
+   below the sticky header instead of being hidden behind it. */
+[id] { scroll-margin-top: var(--rns-header-h); }
+
+body {
+  margin: 0;
+  background: var(--rns-bg);
+  color: var(--rns-ink);
+  font-family: var(--rns-font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--rns-font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--rns-ink);
+}
+
+p { margin: 0; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+img { max-width: 100%; display: block; }
+
+.rns-container {
+  max-width: var(--rns-maxw);
+  margin: 0 auto;
+  padding: 0 var(--rns-gutter);
+}
+
+.rns-section {
+  padding: var(--rns-section-y) 0;
+}
+
+.rns-section--alt {
+  background: var(--rns-bg-alt);
+}
+
+/* Mono "eyebrow" label — used instead of decorative numbering,
+   reads like a system/spec tag rather than a step count. A single
+   dot per page (in a live/status tag) reads as signal; a dot before
+   every section label reads as noise, so this is plain type with a
+   small rule underneath instead. */
+.rns-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--rns-font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rns-ink-soft);
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--rns-primary);
+  width: fit-content;
+}
+
+.rns-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.rns-section-head__text { max-width: 560px; }
+
+.rns-section-title {
+  font-size: clamp(26px, 3.2vw, 34px);
+  margin-top: 10px;
+}
+
+/* Pill badge — used for the hero eyebrow, a slightly heavier
+   treatment than the mono .rns-eyebrow used inside section heads. */
+.rns-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--rns-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--rns-primary-dark);
+  background: var(--rns-primary-tint);
+  border: 1px solid rgba(47, 62, 240, 0.16);
+  border-radius: 999px;
+  padding: 6px 14px 6px 12px;
+  width: fit-content;
+}
+.rns-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rns-gradient-brand);
+  flex-shrink: 0;
+}
+
+.rns-section-sub {
+  color: var(--rns-ink-soft);
+  margin-top: 10px;
+  font-size: 15px;
+}
+
+/* Signature element: a thin "signal trace" — a hairline with
+   inline nodes, echoing a circuit trace. Used between sections
+   instead of animation or gradients. Static, quiet, on-brand. */
+.rns-trace {
+  position: relative;
+  height: 1px;
+  background: var(--rns-line);
+  width: 100%;
+}
+
+.rns-trace__node {
+  position: absolute;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rns-line-strong);
+  transform: translate(-50%, -50%);
+}
+
+/* Buttons */
+.rns-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 11px 20px;
+  border-radius: var(--rns-r-sm);
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    transform 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+.rns-btn:active { transform: translateY(1px); }
+.rns-btn:focus-visible {
+  outline: 2px solid var(--rns-primary);
+  outline-offset: 2px;
+}
+
+.rns-btn--primary {
+  background: var(--rns-ink);
+  color: #fff;
+}
+.rns-btn--primary:hover {
+  background: var(--rns-primary);
+  box-shadow: var(--rns-shadow-brand);
+  transform: translateY(-1px);
+}
+
+.rns-btn--ghost {
+  background: transparent;
+  border-color: var(--rns-line-strong);
+  color: var(--rns-ink);
+}
+.rns-btn--ghost:hover {
+  border-color: var(--rns-ink);
+  background: var(--rns-bg-alt);
+}
+
+.rns-btn--text {
+  padding: 0;
+  color: var(--rns-primary);
+}
+.rns-btn--text:hover { color: var(--rns-primary-dark); }
+
+/* Tags / badges */
+.rns-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--rns-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--rns-bg-alt);
+  color: var(--rns-ink-soft);
+  border: 1px solid var(--rns-line);
+}
+
+.rns-tag--live {
+  background: var(--rns-signal-tint);
+  color: #0a7a58;
+  border-color: transparent;
+}
+.rns-tag--live::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rns-signal);
+}
+
+/* Cards */
+.rns-card {
+  border: 1px solid var(--rns-line);
+  border-radius: var(--rns-r-md);
+  background: var(--rns-bg);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.rns-card:hover {
+  border-color: var(--rns-line-strong);
+  box-shadow: var(--rns-shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Grid helpers */
+.rns-grid {
+  display: grid;
+  gap: 16px;
+}
+.rns-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.rns-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.rns-grid--4 { grid-template-columns: repeat(4, 1fr); }
+.rns-grid--6 { grid-template-columns: repeat(6, 1fr); }
+
+@media (max-width: 960px) {
+  .rns-grid--4, .rns-grid--6 { grid-template-columns: repeat(2, 1fr); }
+  .rns-grid--3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+  :root { --rns-section-y: 28px; --rns-header-h: 122px; }
+  .rns-grid--2, .rns-grid--3, .rns-grid--4, .rns-grid--6 { grid-template-columns: 1fr; }
+  .rns-section-head { flex-direction: column; align-items: flex-start; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; }
+}
+
+/* Visible keyboard focus */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--rns-primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}

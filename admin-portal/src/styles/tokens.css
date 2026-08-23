@@ -1,0 +1,68 @@
+/* RNS INFOTECH — Admin Portal design tokens.
+   Brand tokens (--rns-primary, fonts, radii) are copied verbatim from the
+   storefront's tokens.css so the two products read as one company. Everything
+   below that is admin-specific: a denser neutral scale for data-heavy
+   screens, a dark sidebar surface (storefront already reserved --rns-bg-ink
+   for this purpose but never used it), and a semantic status set for order/
+   stock/payment states that the storefront's token file has no need for. */
+:root {
+  /* brand — identical to the storefront, do not diverge */
+  --rns-primary: #2f3ef0;
+  --rns-primary-dark: #1f2ab8;
+  --rns-primary-tint: #eef0fe;
+  --rns-signal: #12b886;
+  --rns-signal-tint: #e8f9f2;
+
+  --rns-font-display: "Sora", "Helvetica Neue", Arial, sans-serif;
+  --rns-font-body: "Manrope", "Helvetica Neue", Arial, sans-serif;
+  --rns-font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+
+  --rns-r-sm: 6px;
+  --rns-r-md: 10px;
+  --rns-r-lg: 16px;
+
+  /* surfaces — a step denser/cooler than the storefront's, built for
+     tables and cards rather than marketing whitespace */
+  --admin-bg: #f4f5f9;
+  --admin-surface: #ffffff;
+  --admin-surface-alt: #f9fafc;
+  --admin-sidebar: #0d1017; /* == storefront --rns-bg-ink */
+  --admin-sidebar-hover: #191d27;
+  --admin-sidebar-active: #22273a;
+  --admin-sidebar-ink: #c7cad4;
+  --admin-sidebar-ink-dim: #7d8394;
+
+  /* text */
+  --admin-ink: #10131a;
+  --admin-ink-soft: #5a6270;
+  --admin-ink-faint: #868c99;
+  --admin-on-primary: #ffffff;
+
+  /* lines */
+  --admin-line: #e5e7ee;
+  --admin-line-strong: #d3d6e0;
+
+  /* semantic status — orders, stock, payments all need these; the
+     storefront never surfaces failed/cancelled/low-stock states to
+     a shopper, so this set exists only here */
+  --admin-success: #12b886;
+  --admin-success-tint: #e8f9f2;
+  --admin-warning: #d9822b;
+  --admin-warning-tint: #fbf0e2;
+  --admin-danger: #e0384c;
+  --admin-danger-tint: #fdeaec;
+  --admin-info: #2f3ef0;
+  --admin-info-tint: #eef0fe;
+  --admin-neutral: #6b7280;
+  --admin-neutral-tint: #eef0f4;
+
+  /* elevation */
+  --admin-shadow-sm: 0 1px 2px rgba(16, 19, 26, 0.05), 0 1px 1px rgba(16, 19, 26, 0.04);
+  --admin-shadow-md: 0 8px 24px rgba(16, 19, 26, 0.08), 0 2px 6px rgba(16, 19, 26, 0.05);
+
+  /* layout */
+  --admin-sidebar-w: 248px;
+  --admin-sidebar-w-collapsed: 72px;
+  --admin-topbar-h: 64px;
+  --admin-gutter: 24px;
+}

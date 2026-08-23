@@ -1,0 +1,15 @@
+const { Router } = require("express");
+const chatController = require("../controllers/chat.controller");
+const requireAdmin = require("../middleware/requireAdmin");
+const requirePermission = require("../middleware/requirePermission");
+const validate = require("../middleware/validate");
+const validateParamPattern = require("../middleware/validateParamPattern");
+const { adminChatMessageSchema, chatQuerySchema } = require("../validators/chat.validators");
+const router = Router();
+router.use(requireAdmin);
+router.get("/threads", validate(chatQuerySchema, "query"), chatController.listThreads);
+router.get("/threads/:threadId", validateParamPattern("threadId", /^[A-Za-z0-9_-]{1,180}$/), chatController.getThread);
+router.get("/stats", chatController.getStats);
+router.post("/threads/:threadId/messages", validateParamPattern("threadId", /^[A-Za-z0-9_-]{1,180}$/), requirePermission("chat.write"), validate(adminChatMessageSchema), chatController.appendMessage);
+router.post("/threads/:threadId/read", validateParamPattern("threadId", /^[A-Za-z0-9_-]{1,180}$/), requirePermission("chat.write"), chatController.markRead);
+module.exports = router;

@@ -1,0 +1,244 @@
+/* RNS INFOTECH — reusable UI primitives (skeletons, states, toasts,
+   pagination, breadcrumbs, chips, animations). Kept in its own file
+   so the token/base layer stays focused on the design system core. */
+
+/* ---------- Motion ---------- */
+@keyframes rns-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes rns-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes rns-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes rns-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rns-toast-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.rns-animate-in {
+  animation: rns-fade-up 0.5s ease both;
+}
+.rns-animate-in--delay-1 { animation-delay: 0.06s; }
+.rns-animate-in--delay-2 { animation-delay: 0.12s; }
+.rns-animate-in--delay-3 { animation-delay: 0.18s; }
+
+.rns-reveal-pending { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .rns-reveal-pending { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rns-animate-in { animation: none; }
+}
+
+/* ---------- Skeletons ---------- */
+.rns-skeleton {
+  display: block;
+  background: linear-gradient(90deg, var(--rns-line) 25%, var(--rns-bg-alt) 37%, var(--rns-line) 63%);
+  background-size: 400% 100%;
+  animation: rns-shimmer 1.4s ease infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rns-skeleton { animation: none; opacity: 0.6; }
+}
+
+/* ---------- Spinner ---------- */
+.rns-spinner {
+  display: inline-block;
+  border-radius: 50%;
+  border: 2px solid var(--rns-line-strong);
+  border-top-color: var(--rns-primary);
+  animation: rns-spin 0.7s linear infinite;
+}
+/* Old inline "spinner + label" full-page loader lived here; removed —
+   every full-page loading state (route Suspense fallbacks, homepage
+   data fetch, admin session check) now uses the branded splash overlay
+   in components/PageLoader.jsx (class .rns-splash-loader) instead. */
+
+/* ---------- Empty / error state block ---------- */
+.rns-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 56px 24px;
+  border: 1px solid var(--rns-line);
+  border-radius: var(--rns-r-lg);
+  background: var(--rns-bg);
+}
+.rns-state--error { border-color: #f3c9c9; background: #fdf6f6; }
+.rns-state__icon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--rns-bg-alt);
+  color: var(--rns-ink-soft);
+  margin-bottom: 10px;
+}
+.rns-state--error .rns-state__icon { background: #f9e3e3; color: #c0392b; }
+.rns-state__title { font-family: var(--rns-font-display); font-weight: 600; font-size: 17px; }
+.rns-state__message { max-width: 420px; color: var(--rns-ink-soft); font-size: 14px; margin-top: 2px; }
+.rns-state__actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; justify-content: center; }
+
+/* ---------- Toasts ---------- */
+.rns-toast-stack {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 32px));
+}
+.rns-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 14px;
+  border-radius: var(--rns-r-md);
+  background: var(--rns-bg);
+  border: 1px solid var(--rns-line-strong);
+  box-shadow: var(--rns-shadow-lg);
+  animation: rns-toast-in 0.2s ease both;
+}
+.rns-toast--success { border-left: 3px solid var(--rns-signal); }
+.rns-toast--success svg { color: var(--rns-signal); }
+.rns-toast--error { border-left: 3px solid #c0392b; }
+.rns-toast--error svg { color: #c0392b; }
+.rns-toast--info { border-left: 3px solid var(--rns-primary); }
+.rns-toast--info svg { color: var(--rns-primary); }
+.rns-toast__body { flex: 1; min-width: 0; }
+.rns-toast__title { font-weight: 600; font-size: 13.5px; margin-bottom: 2px; }
+.rns-toast__message { font-size: 13px; color: var(--rns-ink-soft); line-height: 1.4; }
+.rns-toast__close {
+  background: none; border: none; padding: 2px; color: var(--rns-ink-faint);
+  display: flex; border-radius: 4px; flex-shrink: 0;
+}
+.rns-toast__close:hover { color: var(--rns-ink); background: var(--rns-bg-alt); }
+
+/* ---------- Pagination ---------- */
+.rns-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+.rns-pagination__nav, .rns-pagination__num {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--rns-r-sm);
+  border: 1px solid var(--rns-line);
+  background: var(--rns-bg);
+  color: var(--rns-ink);
+  font-size: 13.5px;
+  font-family: var(--rns-font-mono);
+}
+.rns-pagination__num:hover, .rns-pagination__nav:hover:not(:disabled) {
+  border-color: var(--rns-line-strong);
+  background: var(--rns-bg-alt);
+}
+.rns-pagination__num.is-active {
+  background: var(--rns-primary);
+  border-color: var(--rns-primary);
+  color: #fff;
+}
+.rns-pagination__nav:disabled { opacity: 0.35; cursor: not-allowed; }
+.rns-pagination__chev-left { transform: rotate(90deg); }
+.rns-pagination__chev-right { transform: rotate(-90deg); }
+.rns-pagination__ellipsis { color: var(--rns-ink-faint); padding: 0 2px; }
+
+/* ---------- Breadcrumbs ---------- */
+.rns-breadcrumbs { margin-bottom: 18px; }
+.rns-breadcrumbs ol {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  color: var(--rns-ink-faint);
+}
+.rns-breadcrumbs li { display: flex; align-items: center; gap: 6px; }
+.rns-breadcrumbs a { color: var(--rns-ink-soft); }
+.rns-breadcrumbs a:hover { color: var(--rns-primary); }
+.rns-breadcrumbs li[aria-current="page"] span { color: var(--rns-ink); font-weight: 500; }
+.rns-breadcrumbs__sep { color: var(--rns-ink-faint); }
+
+/* ---------- Filter chips ---------- */
+.rns-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 4px;
+}
+.rns-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--rns-line-strong);
+  background: var(--rns-primary-tint);
+  color: var(--rns-primary-dark);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.rns-chip:hover { border-color: var(--rns-primary); }
+.rns-chip--clear {
+  background: none;
+  color: var(--rns-ink-soft);
+  border-style: dashed;
+}
+
+/* ---------- Skip link (a11y) ---------- */
+.rns-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 2000;
+  background: var(--rns-primary);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.rns-skip-link:focus {
+  left: 0;
+}
+
+/* ---------- Visually hidden (a11y) ----------
+   For content that should reach screen readers (live-region
+   announcements, extra context) without appearing on screen. */
+.rns-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

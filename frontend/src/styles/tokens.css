@@ -1,0 +1,54 @@
+/* RNS INFOTECH — design tokens */
+:root {
+  /* surfaces */
+  --rns-bg: #ffffff;
+  --rns-bg-alt: #f6f7fb;
+  --rns-bg-ink: #0d1017;
+
+  /* text */
+  --rns-ink: #10131a;
+  --rns-ink-soft: #5a6270;
+  --rns-ink-faint: #6b7280; /* darkened from #9198a6 — that shade was ~2.9:1 on white/bg-alt, below WCAG AA's 4.5:1 for the small (10.5–13.5px) text it's used for across ~100 call sites; this reaches ~4.8:1 while staying visibly lighter than --rns-ink-soft */
+  --rns-on-ink: #eef0f4;
+
+  /* lines */
+  --rns-line: #e5e7ee;
+  --rns-line-strong: #d3d6e0;
+
+  /* brand */
+  --rns-primary: #2f3ef0;
+  --rns-primary-dark: #1f2ab8;
+  --rns-primary-tint: #eef0fe;
+  --rns-accent: #7c3aed; /* violet — used only in the hero/CTA gradients, keeps the rest of the site flat and calm */
+  --rns-signal: #12b886; /* used sparingly: status dots, live tags */
+  --rns-signal-tint: #e8f9f2;
+
+  /* gradients — reserved for hero + CTA bands only, everything else stays flat */
+  --rns-gradient-brand: linear-gradient(135deg, var(--rns-primary) 0%, var(--rns-accent) 100%);
+  --rns-gradient-ink: linear-gradient(135deg, #171a24 0%, #0d1017 60%, #171a24 100%);
+
+  /* radius */
+  --rns-r-sm: 8px;
+  --rns-r-md: 12px;
+  --rns-r-lg: 20px;
+
+  /* elevation */
+  --rns-shadow-sm: 0 1px 2px rgba(16, 19, 26, 0.04), 0 1px 1px rgba(16, 19, 26, 0.03);
+  --rns-shadow-md: 0 8px 24px rgba(16, 19, 26, 0.08), 0 2px 6px rgba(16, 19, 26, 0.04);
+  --rns-shadow-lg: 0 20px 48px rgba(16, 19, 26, 0.12), 0 6px 16px rgba(16, 19, 26, 0.06);
+  --rns-shadow-brand: 0 10px 24px rgba(47, 62, 240, 0.22), 0 2px 8px rgba(47, 62, 240, 0.14);
+
+  /* type */
+  --rns-font-display: "Sora", "Helvetica Neue", Arial, sans-serif;
+  --rns-font-body: "Manrope", "Helvetica Neue", Arial, sans-serif;
+  --rns-font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+
+  /* layout */
+  --rns-maxw: 1200px;
+  --rns-gutter: 20px;
+  --rns-section-y: 40px;
+
+  /* total height of the sticky header (main row + search row),
+     used so anchor-scrolled sections don't land underneath it */
+  --rns-header-h: 132px;
+}
