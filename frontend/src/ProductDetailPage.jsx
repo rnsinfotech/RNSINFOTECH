@@ -703,9 +703,9 @@ export default function ProductDetailPage() {
             {infoTab === "specifications" && specs.length > 0 ? (
               <ul id="panel-specifications" role="tabpanel" aria-labelledby="tab-specifications" className="rns-spec-list">
                 {specs.map((s, i) => (
-                  <li key={s.label || i} className="rns-spec-list__item">
+                  <li key={i} className="rns-spec-list__item">
                     <Icon name="check" size={14} className="rns-spec-list__icon" />
-                    <span><strong>{s.label}:</strong> {s.value}</span>
+                    <span>{s}</span>
                   </li>
                 ))}
               </ul>

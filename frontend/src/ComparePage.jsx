@@ -60,23 +60,7 @@ export default function ComparePage() {
     [items, liveById]
   );
 
-  // Union of every compared product's spec labels, in first-seen order,
-  // so category-specific rows (e.g. "Screen size" for displays) still
-  // show up even when not every compared product has that spec.
-  const specLabels = useMemo(() => {
-    const seen = [];
-    rows.forEach((r) => {
-      (r.specs || []).forEach((s) => {
-        if (!seen.includes(s.label)) seen.push(s.label);
-      });
-    });
-    return seen;
-  }, [rows]);
-
-  function specValue(row, label) {
-    const match = (row.specs || []).find((s) => s.label === label);
-    return match ? match.value : "—";
-  }
+  const hasAnySpecs = useMemo(() => rows.some((r) => (r.specs || []).length > 0), [rows]);
 
   function handleAddToCart(row) {
     addItem(row, 1);
@@ -230,14 +214,24 @@ export default function ComparePage() {
                     ))}
                   </tr>
                 )}
-                {specLabels.map((label) => (
-                  <tr key={label} style={{ borderTop: "1px solid var(--rns-line)" }}>
-                    <td style={{ padding: "12px 12px 12px 0", color: "var(--rns-ink-faint)", fontWeight: 500 }}>{label}</td>
+                {hasAnySpecs && (
+                  <tr style={{ borderTop: "1px solid var(--rns-line)" }}>
+                    <td style={{ padding: "12px 12px 12px 0", color: "var(--rns-ink-faint)", fontWeight: 500, verticalAlign: "top" }}>Specifications</td>
                     {rows.map((r) => (
-                      <td key={r.id} style={{ padding: 12 }}>{specValue(r, label)}</td>
+                      <td key={r.id} style={{ padding: 12, verticalAlign: "top" }}>
+                        {r.specs?.length > 0 ? (
+                          <ul style={{ margin: 0, paddingLeft: 16, display: "flex", flexDirection: "column", gap: 4 }}>
+                            {r.specs.map((s, i) => (
+                              <li key={i}>{s}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                     ))}
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

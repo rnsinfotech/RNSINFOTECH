@@ -182,3 +182,54 @@ describe("productsService — homepage curation fields", () => {
     expect(options.body).toEqual({ isBestSeller: true });
   });
 });
+
+// Regression coverage for the label/value -> plain-string-array change to
+// `specifications` (see IMPLEMENTATION_PLAN.md). Specs are now the same
+// shape as `highlights`: a flat array of description strings, no more
+// { label, value } rows.
+describe("productsService — specifications as a plain string array", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("normalizeProduct passes the backend's specifications array straight through as specs", async () => {
+    adminApiRequest.mockResolvedValue({
+      product: { _id: "p5", specifications: ["10 x 6 in active area", "8,192 pressure levels"] },
+    });
+
+    const product = await getProduct("p5");
+
+    expect(product.specs).toEqual(["10 x 6 in active area", "8,192 pressure levels"]);
+  });
+
+  it("normalizeProduct defaults specs to [] when specifications is missing", async () => {
+    adminApiRequest.mockResolvedValue({ product: { _id: "p6" } });
+
+    const product = await getProduct("p6");
+
+    expect(product.specs).toEqual([]);
+  });
+
+  it("createProduct sends form specs straight through as the specifications array", async () => {
+    adminApiRequest.mockResolvedValue({ product: { _id: "p7" } });
+
+    await createProduct({
+      name: "New Item",
+      categoryId: "cat1",
+      brand: "RNS",
+      sku: "SKU7",
+      price: "100",
+      mrp: "100",
+      stockQty: "5",
+      status: "active",
+      tags: [],
+      shortDescription: "",
+      description: "",
+      highlights: [],
+      specs: ["10 x 6 in active area", "8,192 pressure levels"],
+    });
+
+    const [, options] = adminApiRequest.mock.calls[0];
+    expect(options.body.specifications).toEqual(["10 x 6 in active area", "8,192 pressure levels"]);
+  });
+});

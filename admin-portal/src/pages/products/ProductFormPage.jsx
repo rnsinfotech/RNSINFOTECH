@@ -21,7 +21,7 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/g
 const BLANK = {
   name: "", categoryId: "", brand: "", sku: "", price: "", mrp: "", tags: [], stockQty: "", status: "active",
   isFeatured: false, homepageFeaturedOrder: "", isBestSeller: false, homepageBestSellerOrder: "",
-  shortDescription: "", description: "", highlights: [""], specs: [{ label: "", value: "" }],
+  shortDescription: "", description: "", highlights: [""], specs: [""],
   downloadLinks: [{ label: "", url: "" }], packageContents: [""], images: [],
 };
 
@@ -96,8 +96,8 @@ export default function ProductFormPage() {
   function setHighlight(i, value) { setForm((f) => ({ ...f, highlights: f.highlights.map((h, idx) => (idx === i ? value : h)) })); }
   function addHighlight() { setForm((f) => ({ ...f, highlights: [...f.highlights, ""] })); }
   function removeHighlight(i) { setForm((f) => ({ ...f, highlights: f.highlights.filter((_, idx) => idx !== i) })); }
-  function setSpec(i, key, value) { setForm((f) => ({ ...f, specs: f.specs.map((s, idx) => (idx === i ? { ...s, [key]: value } : s)) })); }
-  function addSpec() { setForm((f) => ({ ...f, specs: [...f.specs, { label: "", value: "" }] })); }
+  function setSpec(i, value) { setForm((f) => ({ ...f, specs: f.specs.map((s, idx) => (idx === i ? value : s)) })); }
+  function addSpec() { setForm((f) => ({ ...f, specs: [...f.specs, ""] })); }
   function removeSpec(i) { setForm((f) => ({ ...f, specs: f.specs.filter((_, idx) => idx !== i) })); }
 
   function setDownloadLink(i, key, value) { setForm((f) => ({ ...f, downloadLinks: f.downloadLinks.map((d, idx) => (idx === i ? { ...d, [key]: value } : d)) })); }
@@ -198,7 +198,7 @@ export default function ProductFormPage() {
       isFeatured: form.isFeatured, homepageFeaturedOrder: form.homepageFeaturedOrder,
       isBestSeller: form.isBestSeller, homepageBestSellerOrder: form.homepageBestSellerOrder,
       shortDescription: form.shortDescription.trim(), description: form.description.trim() || form.shortDescription.trim(),
-      highlights: form.highlights.map((h) => h.trim()).filter(Boolean), specs: form.specs.filter((s) => s.label.trim() && s.value.trim()),
+      highlights: form.highlights.map((h) => h.trim()).filter(Boolean), specs: form.specs.map((s) => s.trim()).filter(Boolean),
       downloadLinks: form.downloadLinks
         .map((d) => ({ label: d.label.trim(), url: d.url.trim() }))
         .filter((d) => d.label && d.url),
@@ -295,7 +295,7 @@ export default function ProductFormPage() {
 
         <div className="admin-form-section"><h3>Highlights</h3>{form.highlights.map((h, i) => <div className="admin-dyn-row" key={i}><input className="admin-input" value={h} onChange={(e) => setHighlight(i, e.target.value)} placeholder="e.g. 8,192 pressure levels with tilt recognition" /><button type="button" className="admin-icon-btn admin-icon-btn--danger" onClick={() => removeHighlight(i)} aria-label="Remove highlight"><Icon name="close" size={13} /></button></div>)}<button type="button" className="admin-btn admin-btn--ghost admin-btn--sm" onClick={addHighlight}><Icon name="plus" size={13} /> Add highlight</button></div>
 
-        <div className="admin-form-section"><h3>Specifications</h3>{form.specs.map((s, i) => <div className="admin-dyn-row" key={i}><input className="admin-input" style={{ maxWidth: 180 }} value={s.label} onChange={(e) => setSpec(i, "label", e.target.value)} placeholder="Label" /><input className="admin-input" value={s.value} onChange={(e) => setSpec(i, "value", e.target.value)} placeholder="Value" /><button type="button" className="admin-icon-btn admin-icon-btn--danger" onClick={() => removeSpec(i)} aria-label="Remove spec"><Icon name="close" size={13} /></button></div>)}<button type="button" className="admin-btn admin-btn--ghost admin-btn--sm" onClick={addSpec}><Icon name="plus" size={13} /> Add spec</button></div>
+        <div className="admin-form-section"><h3>Specifications</h3>{form.specs.map((s, i) => <div className="admin-dyn-row" key={i}><input className="admin-input" value={s} onChange={(e) => setSpec(i, e.target.value)} placeholder="e.g. 10 x 6 in active area" /><button type="button" className="admin-icon-btn admin-icon-btn--danger" onClick={() => removeSpec(i)} aria-label="Remove spec"><Icon name="close" size={13} /></button></div>)}<button type="button" className="admin-btn admin-btn--ghost admin-btn--sm" onClick={addSpec}><Icon name="plus" size={13} /> Add spec</button></div>
 
         <div className="admin-form-section"><h3>Download links</h3><p style={{ fontSize: 12.5, color: "var(--admin-ink-faint)", marginTop: -4 }}>Link out to drivers, manuals, or setup guides hosted on the manufacturer's own website — shown on this product's page. Leave empty if none apply.</p>{form.downloadLinks.map((d, i) => <div className="admin-dyn-row" key={i}><input className="admin-input" style={{ maxWidth: 220 }} value={d.label} onChange={(e) => setDownloadLink(i, "label", e.target.value)} placeholder="Label, e.g. Driver (Windows/Mac)" /><input className="admin-input" type="url" value={d.url} onChange={(e) => setDownloadLink(i, "url", e.target.value)} placeholder="https://manufacturer.com/downloads/driver.exe" /><button type="button" className="admin-icon-btn admin-icon-btn--danger" onClick={() => removeDownloadLink(i)} aria-label="Remove download link"><Icon name="close" size={13} /></button></div>)}<button type="button" className="admin-btn admin-btn--ghost admin-btn--sm" onClick={addDownloadLink}><Icon name="plus" size={13} /> Add download link</button></div>
 

@@ -51,8 +51,8 @@ const productSchema = new mongoose.Schema(
     images: { type: [productImageSchema], default: [], validate: { validator: (images) => images.length <= 12, message: "A product may have at most 12 images." } },
     // Short bullet points shown on the storefront product page just below
     // the price (e.g. "8,192 pressure levels with tilt recognition") —
-    // distinct from `specifications` below, which is structured label/value
-    // spec-sheet data. Capped at 20 for the same reason as downloadLinks.
+    // same shape as `specifications` below, just a different section of
+    // the product page. Capped at 20 for the same reason as downloadLinks.
     highlights: {
       type: [{ type: String, trim: true, maxlength: 200 }],
       default: [],
@@ -63,11 +63,16 @@ const productSchema = new mongoose.Schema(
     // discountPercent below is derived from the two, never stored.
     mrp: { type: Number, required: true, min: 0 },
     stock: { type: Number, required: true, min: 0, default: 0 },
-    // Free-form spec sheet (e.g. "Active Area" -> "10 x 6 in") so new spec
-    // rows never need a schema migration. Structured stock adjustments
-    // with an audit trail are Phase B10 (inventorylog) — this field is
-    // just the current count.
-    specifications: { type: Map, of: String, default: {} },
+    // Free-form spec sheet — a plain list of description strings (e.g.
+    // "10 x 6 in active area"), same shape/cap as `highlights` above.
+    // Used to be a label/value Map; existing documents were migrated to
+    // this array shape by scripts/migrateSpecificationsToArray.js, which
+    // keeps only the old value and drops the old label.
+    specifications: {
+      type: [{ type: String, trim: true, maxlength: 200 }],
+      default: [],
+      validate: { validator: (items) => items.length <= 20, message: "A product may have at most 20 specifications." },
+    },
     tags: [{ type: String, trim: true, lowercase: true }],
     // Links to drivers/manuals hosted on the manufacturer's own site —
     // see productDownloadLinkSchema above. Capped at 20, same rationale
