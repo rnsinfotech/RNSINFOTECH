@@ -47,7 +47,9 @@ const productSchema = new mongoose.Schema(
     price: { type: Number, required: true, min: 0 },
     mrp: { type: Number, required: true, min: 0 },
     stock: { type: Number, required: true, min: 0, default: 0 },
-    specifications: { type: Map, of: String, default: {} },
+    // Mirrors admin-backend/src/models/Product.js — a flat list of spec
+    // lines, each rendered as its own bullet. Read-only here.
+    specifications: { type: [{ type: String, trim: true, maxlength: 200 }], default: [] },
     tags: [{ type: String, trim: true, lowercase: true }],
     downloadLinks: { type: [productDownloadLinkSchema], default: [] },
     // Mirrors admin-backend/src/models/Product.js — see that file for

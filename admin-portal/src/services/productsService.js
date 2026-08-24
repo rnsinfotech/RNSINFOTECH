@@ -14,17 +14,9 @@ function normalizeProduct(product = {}) {
   const tags = Array.isArray(product.tags) ? product.tags : product.tag && product.tag !== "none" ? [product.tag] : [];
   const status = product.isActive === false ? "inactive" : "active";
   const nextStock = stockQty <= 0 ? "out-of-stock" : stockQty <= getLowStockThresholdSync() ? "low-stock" : "in-stock";
-  // `specifications` is a Mongoose Map on the backend, which serializes to
-  // a plain object ({ "Active Area": "10 x 6 in" }), never an array — the
-  // Array.isArray check below always failed, so specs silently came back
-  // empty on both this detail page and the edit form after every save.
-  // Mirrors frontend/src/lib/api.js's normalizeProduct, which already
-  // handled this correctly on the storefront side.
-  const specs = Array.isArray(product.specifications)
-    ? product.specifications
-    : product.specifications && typeof product.specifications === "object"
-      ? Object.entries(product.specifications).map(([label, value]) => ({ label, value: String(value ?? "") }))
-      : [];
+  // `specifications` is a flat list of spec lines on the backend — mirrors
+  // frontend/src/lib/api.js's normalizeProduct on the storefront side.
+  const specs = Array.isArray(product.specifications) ? product.specifications : [];
 
   return {
     id: product._id || product.id || product.slug,
@@ -81,7 +73,7 @@ function toApiPayload(data) {
     sku: String(data.sku || "").trim(),
     tags: Array.isArray(data.tags) ? data.tags.map((t) => String(t).trim().toLowerCase()).filter(Boolean) : [],
     highlights: Array.isArray(data.highlights) ? data.highlights.filter(Boolean) : [],
-    specifications: Array.isArray(data.specs) ? Object.fromEntries(data.specs.filter((s) => s && s.label && s.value).map((s) => [s.label, s.value])) : {},
+    specifications: Array.isArray(data.specs) ? data.specs.map((s) => String(s ?? "").trim()).filter(Boolean) : [],
     downloadLinks: Array.isArray(data.downloadLinks)
       ? data.downloadLinks.filter((d) => d && d.label && d.url).map((d) => ({ label: String(d.label).trim(), url: String(d.url).trim() }))
       : [],
@@ -206,4 +198,3 @@ export async function getProductStats() {
     outOfStock: items.filter((p) => p.stock === "out-of-stock").length,
   };
 }
-
