@@ -207,23 +207,17 @@ export default function ProductDetailPage() {
     }
   }
 
-  // These three used to sit after the early-return states below, which
-  // violates the Rules of Hooks: while `loading` is true (or `product`
-  // is null on a 404), those returns fire before React ever reaches
-  // these useMemo calls, so a render with data has three more hooks
-  // than a render without it — React error #310 ("rendered more hooks
-  // than during the previous render"). Hooks now run unconditionally on
-  // every render, using product?.categoryId since `product` (and the
-  // destructured `categoryId`) may still be null/undefined here.
+  // These hooks must run unconditionally on every render, before the
+  // early returns below (loading / 404 states) — otherwise those
+  // renders execute fewer hooks than a render with data, which is
+  // React error #310 ("rendered more hooks than during the previous
+  // render"). Each memo below therefore reads from `product?.x` /
+  // `id` rather than the destructured variables further down, since
+  // `product` may still be null at this point.
   const related = useMemo(
     () => relatedProducts.filter((p) => p.categoryId === product?.categoryId && p.id !== id).slice(0, 4),
     [product?.categoryId, id, relatedProducts]
   );
-
-  // Per-product download links, added by the admin at product
-  // creation/edit time and pointing at the manufacturer's own site —
-  // no longer sourced from the static siteData `downloads` catalogue.
-  const productDownloads = product?.downloadLinks || [];
 
   const ratingBreakdown = useMemo(() => {
     const counts = [5, 4, 3, 2, 1].map((star) => ({
@@ -233,6 +227,25 @@ export default function ProductDetailPage() {
     const max = Math.max(1, ...counts.map((c) => c.count));
     return counts.map((c) => ({ ...c, pct: Math.round((c.count / max) * 100) }));
   }, [liveReviews]);
+
+  // description is admin-authored rich-text HTML, already sanitized
+  // server-side on save (see admin-backend/src/utils/sanitizeDescription.js);
+  // sanitizing again here is a cheap second layer of defense before it's
+  // rendered with dangerouslySetInnerHTML on this public page.
+  const sanitizedDescription = useMemo(
+    () =>
+      DOMPurify.sanitize(product?.description || "", {
+        ALLOWED_TAGS: ["p", "br", "strong", "b", "em", "i", "u", "s", "strike", "h1", "h2", "h3", "h4", "ul", "ol", "li", "a", "img", "blockquote", "hr", "span"],
+        ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "width", "height", "style", "class"],
+      }),
+    [product?.description]
+  );
+
+  // Per-product download links, added by the admin at product
+  // creation/edit time and pointing at the manufacturer's own site —
+  // no longer sourced from the static siteData `downloads` catalogue.
+  // Not a hook, so it's safe to leave among the derived values below.
+  const productDownloads = product?.downloadLinks || [];
 
   if (!loading && !product) {
     if (loadError && loadError.status !== 404) {
@@ -292,15 +305,6 @@ export default function ProductDetailPage() {
     rating,
     reviewCount,
   } = product;
-
-  // description is admin-authored rich-text HTML, already sanitized
-  // server-side on save (see admin-backend/src/utils/sanitizeDescription.js);
-  // sanitizing again here is a cheap second layer of defense before it's
-  // rendered with dangerouslySetInnerHTML on this public page.
-  const sanitizedDescription = useMemo(
-    () => DOMPurify.sanitize(description || "", { ALLOWED_TAGS: ["p", "br", "strong", "b", "em", "i", "u", "s", "strike", "h1", "h2", "h3", "h4", "ul", "ol", "li", "a", "img", "blockquote", "hr", "span"], ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "width", "height", "style", "class"] }),
-    [description]
-  );
 
   const discount = mrp && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : null;
   const comparing = isComparing(id);
