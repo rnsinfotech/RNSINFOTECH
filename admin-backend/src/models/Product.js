@@ -43,6 +43,15 @@ const productSchema = new mongoose.Schema(
     description: { type: String, trim: true, default: "", maxlength: 50000 },
     shortDescription: { type: String, trim: true, default: "", maxlength: 200 },
     images: { type: [productImageSchema], default: [], validate: { validator: (images) => images.length <= 12, message: "A product may have at most 12 images." } },
+    // Short bullet points shown on the storefront product page just below
+    // the price (e.g. "8,192 pressure levels with tilt recognition") —
+    // distinct from `specifications` below, which is structured label/value
+    // spec-sheet data. Capped at 20 for the same reason as downloadLinks.
+    highlights: {
+      type: [{ type: String, trim: true, maxlength: 200 }],
+      default: [],
+      validate: { validator: (items) => items.length <= 20, message: "A product may have at most 20 highlights." },
+    },
     price: { type: Number, required: true, min: 0 },
     // Struck-through "original" price shown alongside `price` in the UI;
     // discountPercent below is derived from the two, never stored.

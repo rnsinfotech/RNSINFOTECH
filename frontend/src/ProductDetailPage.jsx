@@ -111,6 +111,11 @@ export default function ProductDetailPage() {
   }, [id]);
 
   const [qty, setQty] = useState(1);
+  // Which of the Description/Specifications tabs is showing in the info
+  // section below the fold. Declared here (not inline where it's used) so
+  // it runs unconditionally on every render, same as the other hooks —
+  // see the useMemo note further down for why that matters.
+  const [infoTab, setInfoTab] = useState("description");
 
   const { isAuthenticated } = useAuth();
   const [liveReviews, setLiveReviews] = useState([]);
@@ -650,51 +655,56 @@ export default function ProductDetailPage() {
         </div>
       </section>
 
-      {/* Description + specs */}
+      {/* Description + specifications */}
       <section className="rns-section">
         <div className="rns-container">
-          <div className="rns-pdp-layout">
-            <div>
-              <h2 className="rns-section-title" style={{ fontSize: 20 }}>
+          <div className="rns-pdp-tabs">
+            <div className="rns-pdp-tabs__nav" role="tablist" aria-label="Product information">
+              <button
+                type="button"
+                role="tab"
+                id="tab-description"
+                aria-selected={infoTab === "description"}
+                aria-controls="panel-description"
+                className={`rns-pdp-tab${infoTab === "description" ? " rns-pdp-tab--active" : ""}`}
+                onClick={() => setInfoTab("description")}
+              >
                 Description
-              </h2>
-              <div
-                className="rns-rich-content"
-                style={{ marginTop: 14, fontSize: 14.5, color: "var(--rns-ink-soft)", lineHeight: 1.7 }}
-                dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
-              />
+              </button>
+              {specs.length > 0 && (
+                <button
+                  type="button"
+                  role="tab"
+                  id="tab-specifications"
+                  aria-selected={infoTab === "specifications"}
+                  aria-controls="panel-specifications"
+                  className={`rns-pdp-tab${infoTab === "specifications" ? " rns-pdp-tab--active" : ""}`}
+                  onClick={() => setInfoTab("specifications")}
+                >
+                  Specifications
+                </button>
+              )}
             </div>
 
-            <div>
-              <h2 className="rns-section-title" style={{ fontSize: 20 }}>
-                Specifications
-              </h2>
+            {infoTab === "description" || specs.length === 0 ? (
               <div
-                style={{
-                  marginTop: 14,
-                  border: "1px solid var(--rns-line)",
-                  borderRadius: "var(--rns-r-md)",
-                  overflow: "hidden",
-                }}
-              >
+                id="panel-description"
+                role="tabpanel"
+                aria-labelledby="tab-description"
+                className="rns-rich-content"
+                style={{ fontSize: 14.5, color: "var(--rns-ink-soft)", lineHeight: 1.7 }}
+                dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
+              />
+            ) : (
+              <ul id="panel-specifications" role="tabpanel" aria-labelledby="tab-specifications" className="rns-spec-list">
                 {specs.map((s, i) => (
-                  <div
-                    key={s.label}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 16,
-                      padding: "11px 16px",
-                      fontSize: 13.5,
-                      background: i % 2 === 0 ? "var(--rns-bg-alt)" : "transparent",
-                    }}
-                  >
-                    <span style={{ color: "var(--rns-ink-soft)" }}>{s.label}</span>
-                    <span style={{ fontWeight: 500, textAlign: "right" }}>{s.value}</span>
-                  </div>
+                  <li key={s.label || i} className="rns-spec-list__item">
+                    <Icon name="check" size={14} className="rns-spec-list__icon" />
+                    <span>{s.value}</span>
+                  </li>
                 ))}
-              </div>
-            </div>
+              </ul>
+            )}
           </div>
         </div>
       </section>
@@ -972,10 +982,54 @@ export default function ProductDetailPage() {
           align-items: start;
         }
         .rns-star { fill: currentColor; stroke: none; }
+
+        .rns-pdp-tabs__nav {
+          display: flex;
+          gap: 4px;
+          border-bottom: 1px solid var(--rns-line);
+          margin-bottom: 24px;
+        }
+        .rns-pdp-tab {
+          appearance: none;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 12px 4px;
+          margin-right: 28px;
+          font-family: var(--rns-font-display);
+          font-size: 15px;
+          font-weight: 600;
+          color: var(--rns-ink-faint);
+          border-bottom: 2px solid transparent;
+          transform: translateY(1px);
+          transition: color .15s ease, border-color .15s ease;
+        }
+        .rns-pdp-tab:hover { color: var(--rns-ink-soft); }
+        .rns-pdp-tab--active { color: var(--rns-ink); border-bottom-color: var(--rns-primary); }
+
+        .rns-spec-list {
+          margin: 0;
+          padding: 0;
+          list-style: none;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px 32px;
+        }
+        .rns-spec-list__item {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          font-size: 13.5px;
+          line-height: 1.5;
+          color: var(--rns-ink-soft);
+        }
+        .rns-spec-list__icon { color: var(--rns-signal); flex-shrink: 0; margin-top: 3px; }
+
         @media (max-width: 760px) {
           .rns-pdp-layout { grid-template-columns: 1fr !important; gap: 28px !important; }
           .rns-pdp-reviews { grid-template-columns: 1fr !important; gap: 24px !important; }
           .rns-pdp-trust { grid-template-columns: 1fr !important; }
+          .rns-spec-list { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </>

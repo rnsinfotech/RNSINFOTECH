@@ -14,6 +14,17 @@ function normalizeProduct(product = {}) {
   const tags = Array.isArray(product.tags) ? product.tags : product.tag && product.tag !== "none" ? [product.tag] : [];
   const status = product.isActive === false ? "inactive" : "active";
   const nextStock = stockQty <= 0 ? "out-of-stock" : stockQty <= getLowStockThresholdSync() ? "low-stock" : "in-stock";
+  // `specifications` is a Mongoose Map on the backend, which serializes to
+  // a plain object ({ "Active Area": "10 x 6 in" }), never an array — the
+  // Array.isArray check below always failed, so specs silently came back
+  // empty on both this detail page and the edit form after every save.
+  // Mirrors frontend/src/lib/api.js's normalizeProduct, which already
+  // handled this correctly on the storefront side.
+  const specs = Array.isArray(product.specifications)
+    ? product.specifications
+    : product.specifications && typeof product.specifications === "object"
+      ? Object.entries(product.specifications).map(([label, value]) => ({ label, value: String(value ?? "") }))
+      : [];
 
   return {
     id: product._id || product.id || product.slug,
@@ -34,7 +45,7 @@ function normalizeProduct(product = {}) {
     shortDescription: product.shortDescription || "",
     description: product.description || "",
     highlights: Array.isArray(product.highlights) ? product.highlights : [],
-    specs: Array.isArray(product.specifications) ? product.specifications : [],
+    specs,
     downloadLinks: Array.isArray(product.downloadLinks)
       ? product.downloadLinks.map((d) => ({ id: d._id || d.id || "", label: d.label || "", url: d.url || "" }))
       : [],

@@ -38,6 +38,9 @@ const productSchema = new mongoose.Schema(
     description: { type: String, trim: true, default: "", maxlength: 50000 },
     shortDescription: { type: String, trim: true, default: "", maxlength: 200 },
     images: { type: [productImageSchema], default: [] },
+    // Mirrors admin-backend/src/models/Product.js — see that file for the
+    // field's reasoning. Read-only here.
+    highlights: { type: [{ type: String, trim: true, maxlength: 200 }], default: [] },
     price: { type: Number, required: true, min: 0 },
     mrp: { type: Number, required: true, min: 0 },
     stock: { type: Number, required: true, min: 0, default: 0 },
