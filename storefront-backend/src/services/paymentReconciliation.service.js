@@ -2,6 +2,8 @@ const Payment = require("../models/Payment");
 const Order = require("../models/Order");
 const { getRazorpayOrder, listRazorpayOrderPayments, listRazorpayPaymentRefunds, listRazorpayOrdersByReceipt, createRazorpayRefund } = require("./razorpay.service");
 const { settlePaidPayment, failPayment } = require("../controllers/payment.controller");
+const { reclaimExpiredReservation } = require("./stock.service");
+const { transitionOrder } = require("./orderLifecycle.service");
 
 async function reconcilePayment(payment) {
   if (!payment?.razorpayOrderId) return null;
@@ -20,23 +22,31 @@ async function reconcilePayment(payment) {
 
   if (captured && !["paid", "refunded"].includes(payment.status)) {
     const order = await Order.findById(payment.order);
-    const reservationValid = order && (!order.reservationStatus || (
-      order.reservationStatus === "reserved" &&
-      order.reservationExpiresAt &&
-      new Date(order.reservationExpiresAt) > new Date()
-    ));
+    // No time cutoff here either — reclaim the reservation (re-reserve the
+    // same stock) rather than treating "expiry timestamp passed" as fatal.
+    // Only a genuine stock-out should trigger a refund.
+    let reservationValid = false;
+    if (order) {
+      if (!order.reservationStatus || order.reservationStatus === "reserved") {
+        reservationValid = true;
+      } else {
+        reservationValid = await reclaimExpiredReservation(order);
+      }
+    }
     if (reservationValid) {
       await settlePaidPayment(payment, { paymentId: captured.id, method: captured.method });
       result.changed = true;
     } else {
-      // The customer may have been charged after the local reservation expired.
-      // Do not silently mark the order paid without inventory. Initiate a real
-      // Razorpay refund and leave a clear local audit trail.
+      // The customer was charged and the item is genuinely out of stock —
+      // not a timing issue. Refund, leave a clear audit trail, and make
+      // sure both the order status and the customer's order history
+      // reflect what happened instead of the order silently vanishing.
+      const reason = "Reconciliation: item out of stock, payment could not be confirmed";
       try {
         const refund = await createRazorpayRefund({
           razorpayPaymentId: captured.id,
           amountInRupees: Number(payment.amount),
-          notes: { orderId: String(payment.order), reason: "Reconciliation: inventory reservation expired" },
+          notes: { orderId: String(payment.order), reason },
         });
         payment.status = "refunded";
         payment.refundStatus = refund.status === "processed" ? "processed" : "pending";
@@ -45,14 +55,25 @@ async function reconcilePayment(payment) {
         payment.refundedAmount = Number(refund.amount || 0) / 100;
         payment.refundInitiatedAt = new Date();
         payment.refundedAt = refund.status === "processed" ? new Date() : null;
-        payment.failureReason = "Payment captured after inventory reservation expiry; refund initiated.";
+        payment.refundReason = reason;
+        payment.failureReason = "Payment captured but item was out of stock; refund initiated.";
         await payment.save();
         result.changed = true;
       } catch (_) {
-        payment.failureReason = "Payment captured after inventory reservation expiry; manual reconciliation required.";
+        payment.failureReason = "Payment captured but item was out of stock; manual reconciliation required.";
         payment.razorpayPaymentId = captured.id;
         payment.razorpayStatus = "captured";
         await payment.save();
+      }
+      if (order) {
+        // Payment briefly succeeded then had to be reversed — this is a
+        // paid-then-refunded order, not a "never paid" one. Set the same
+        // gate settlePaidPayment sets so it appears in the customer's
+        // order history (attachPaymentStatus will surface "refunded").
+        await Order.updateOne({ _id: order._id, paymentVerifiedAt: null }, { $set: { paymentVerifiedAt: new Date() } });
+        if (["pending", "confirmed"].includes(order.status)) {
+          try { await transitionOrder(order, "cancelled", { actorType: "system", note: reason }); } catch (_) {}
+        }
       }
     }
   } else if (!captured && payment.status === "created" && payment.expiresAt && new Date(payment.expiresAt) <= new Date()) {

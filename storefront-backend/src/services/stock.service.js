@@ -119,6 +119,39 @@ async function restoreConsumedOrderStock(order, { actorUser = null, reason = "Or
   return true;
 }
 
+// Verification/settlement should never fail purely because a clock ran
+// out — only because the stock is genuinely gone. reservationExpiresAt is
+// just a hint the sweeper uses to decide *when* to release stock back to
+// the pool; reservationStatus is the actual source of truth for whether
+// this order still holds it. This re-checks that source of truth and, if
+// the sweeper already released the stock, tries to reserve the exact same
+// quantities again right now instead of giving up on elapsed time alone.
+async function reclaimExpiredReservation(order) {
+  if (!order) return false;
+  if (["reserved", "pending", "consumed"].includes(order.reservationStatus)) return true;
+  try {
+    await reserveStock(order.items, { orderId: order._id, actorUser: order.user });
+  } catch (_) {
+    return false;
+  }
+  const reclaimed = await Order.findOneAndUpdate(
+    { _id: order._id },
+    {
+      $set: {
+        reservationStatus: "reserved",
+        reservationExpiresAt: new Date(Date.now() + RESERVATION_MS),
+        reservationReleasedAt: null,
+        reservationReleaseReason: null,
+      },
+    },
+    { new: true }
+  );
+  if (!reclaimed) return false;
+  order.reservationStatus = reclaimed.reservationStatus;
+  order.reservationExpiresAt = reclaimed.reservationExpiresAt;
+  return true;
+}
+
 async function expireReservations() {
   const now = new Date();
   const orders = await Order.find({ reservationStatus: "reserved", reservationExpiresAt: { $lte: now }, status: "pending" }).limit(100);
@@ -174,6 +207,7 @@ module.exports = {
   releaseOrderReservation,
   releaseFailedPaymentReservation,
   consumeOrderReservation,
+  reclaimExpiredReservation,
   expireReservations,
   startReservationSweeper,
   restoreConsumedOrderStock,

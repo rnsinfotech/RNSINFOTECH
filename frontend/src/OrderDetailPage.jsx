@@ -195,8 +195,8 @@ export default function OrderDetailPage() {
               display: "flex",
               alignItems: "flex-start",
               gap: 10,
-              background: "#fdecec",
-              color: "#c0392b",
+              background: status.isRefunded ? "#fdf2e3" : "#fdecec",
+              color: status.isRefunded ? "#9a6300" : "#c0392b",
               borderRadius: "var(--rns-r-sm)",
               padding: "12px 16px",
               fontSize: 13.5,
@@ -204,7 +204,14 @@ export default function OrderDetailPage() {
           >
             <Icon name="alert" size={16} style={{ marginTop: 1, flexShrink: 0 }} />
             <div>
-              <div style={{ fontWeight: 600 }}>This order was cancelled</div>
+              <div style={{ fontWeight: 600 }}>
+                {status.isRefunded ? "This order was refunded" : "This order was cancelled"}
+              </div>
+              {status.isRefunded && (
+                <div style={{ marginTop: 2, fontSize: 12.5 }}>
+                  Your payment was captured but couldn't be completed, so it was refunded automatically. It can take 5-7 working days to reflect in your bank account.
+                </div>
+              )}
               {status.cancelReason && (
                 <div style={{ marginTop: 2, fontSize: 12.5 }}>{status.cancelReason}</div>
               )}

@@ -26,7 +26,11 @@ function formatDate(iso) {
 
 function StatusBadge({ status }) {
   if (status.isCancelled) {
-    return (
+    return status.isRefunded ? (
+      <span className="rns-tag" style={{ background: "#fdf2e3", color: "#9a6300", border: "1px solid transparent" }}>
+        Refunded
+      </span>
+    ) : (
       <span className="rns-tag" style={{ background: "#fdecec", color: "#c0392b", border: "1px solid transparent" }}>
         Cancelled
       </span>

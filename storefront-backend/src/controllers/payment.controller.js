@@ -6,7 +6,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const { env } = require("../config/env");
 const { sendTransactionalEmail } = require("../services/email.service");
 const { calculateStoredOrderPricing, pricingMatchesOrder } = require("../services/pricing.service");
-const { consumeOrderReservation, releaseFailedPaymentReservation } = require("../services/stock.service");
+const { consumeOrderReservation, releaseFailedPaymentReservation, reclaimExpiredReservation } = require("../services/stock.service");
 const { consumeCoupon, releaseCoupon } = require("../services/coupon.service");
 const { transitionOrder } = require("../services/orderLifecycle.service");
 const {
@@ -20,8 +20,14 @@ async function settlePaidPayment(payment, { paymentId, method = null } = {}) {
   const currentOrder = await Order.findById(payment.order);
   if (!currentOrder) throw ApiError.notFound("Order not found.");
 
-  if (currentOrder.reservationStatus && (currentOrder.reservationStatus !== "reserved" || !currentOrder.reservationExpiresAt || new Date(currentOrder.reservationExpiresAt) <= new Date())) {
-    throw ApiError.conflict("Inventory reservation expired before payment could be confirmed.");
+  // There is no time limit on confirming a payment. reservationExpiresAt is
+  // only a hint for the sweeper; reservationStatus is what actually tells us
+  // whether the stock is still held. Callers (verifyPayment/webhook/
+  // reconciliation) are expected to have already tried reclaimExpiredReservation
+  // before calling this — if the status is still "released"/"expired" here,
+  // the stock is genuinely gone, not merely late.
+  if (currentOrder.reservationStatus === "released" || currentOrder.reservationStatus === "expired") {
+    throw ApiError.conflict("This item is no longer in stock.");
   }
 
   const update = {
@@ -114,8 +120,12 @@ const createPaymentOrder = asyncHandler(async (req, res) => {
     });
   }
 
-  if (order.reservationStatus && (order.reservationStatus !== "reserved" || !order.reservationExpiresAt || new Date(order.reservationExpiresAt) <= new Date())) {
-    throw ApiError.conflict("This order's inventory reservation has expired. Please place the order again.");
+  // No arbitrary time cutoff for starting/resuming a payment attempt either —
+  // only try to reclaim the stock if it was actually released back to the
+  // pool. If someone else has since bought it, that's a real conflict.
+  if (order.reservationStatus && order.reservationStatus !== "reserved") {
+    const reclaimed = await reclaimExpiredReservation(order);
+    if (!reclaimed) throw ApiError.conflict("An item in this order is no longer in stock. Please place the order again.");
   }
 
   const calculated = calculateStoredOrderPricing(order);
@@ -212,9 +222,41 @@ const verifyPayment = asyncHandler(async (req, res) => {
   }
 
   const order = await Order.findById(payment.order);
-  if (!order || (order.reservationStatus && (order.reservationStatus !== "reserved" || !order.reservationExpiresAt || new Date(order.reservationExpiresAt) <= new Date()))) {
-    await failPayment(payment, "Inventory reservation expired before payment verification.", "expired");
-    throw ApiError.conflict("The inventory reservation expired before payment could be confirmed. Please contact support if your bank was charged.");
+  if (!order) {
+    await failPayment(payment, "Order not found.", "expired");
+    throw ApiError.conflict("Order not found.");
+  }
+
+  // Verification has no time limit — the customer can confirm whenever
+  // they come back. If the reservation lapsed and stock was released back
+  // to the pool in the meantime, try to reclaim the same quantities now.
+  if (order.reservationStatus && !(await reclaimExpiredReservation(order))) {
+    // Only a genuine stock-out (not elapsed time) reaches here. Razorpay
+    // already captured the money at this point, so refund it automatically
+    // and make sure the customer can see what happened to their order.
+    await failPayment(payment, "Item went out of stock before payment could be confirmed; refund initiated.", "expired");
+    try {
+      const refund = await createRazorpayRefund({
+        razorpayPaymentId,
+        amountInRupees: Number(payment.amount),
+        notes: { orderId: String(order._id), reason: "Out of stock after payment capture" },
+      });
+      payment.status = "refunded";
+      payment.refundStatus = refund.status === "processed" ? "processed" : "pending";
+      payment.razorpayPaymentId = razorpayPaymentId;
+      payment.razorpayRefundId = refund.id;
+      payment.refundedAmount = Number(refund.amount || 0) / 100;
+      payment.refundInitiatedAt = new Date();
+      payment.refundedAt = refund.status === "processed" ? new Date() : null;
+      payment.refundReason = "Out of stock — order cancelled";
+      payment.failureReason = "Item went out of stock after payment; refund initiated.";
+      await payment.save();
+    } catch (_) { /* Razorpay refund call failed — refund still needs manual follow-up; payment stays "expired" so it surfaces in the admin payments list */ }
+    // The order is now paid-then-cancelled, not "never paid" — make sure it
+    // shows up in the customer's order history (with paymentStatus: "refunded")
+    // instead of silently disappearing.
+    await Order.updateOne({ _id: order._id, paymentVerifiedAt: null }, { $set: { paymentVerifiedAt: new Date() } });
+    throw ApiError.conflict("This item went out of stock before your payment could be confirmed. It has been refunded automatically — check your order history for details.");
   }
 
   const updated = await settlePaidPayment(payment, { paymentId: razorpayPaymentId });
@@ -272,15 +314,19 @@ const webhook = asyncHandler(async (req, res) => {
 
   if (event.event === "payment.captured") {
     if (payment.status !== "paid" && payment.status !== "refunded") {
+      const order = await Order.findById(payment.order);
+      // Reclaim before attempting to settle, same as verifyPayment — no
+      // time cutoff, only a real stock-out should fail this.
+      if (order?.reservationStatus) await reclaimExpiredReservation(order);
       try {
         await settlePaidPayment(payment, { paymentId: paymentEntity.id, method: paymentEntity.method });
       } catch (_) {
-        await failPayment(payment, "Inventory reservation expired before captured payment was received.", "expired");
+        await failPayment(payment, "Item was out of stock when captured payment was received.", "expired");
         try {
           const refund = await createRazorpayRefund({
             razorpayPaymentId: paymentEntity.id,
             amountInRupees: Number(payment.amount),
-            notes: { orderId: String(payment.order), reason: "Captured after inventory reservation expiry" },
+            notes: { orderId: String(payment.order), reason: "Out of stock after payment capture" },
           });
           payment.status = "refunded";
           payment.refundStatus = refund.status === "processed" ? "processed" : "pending";
@@ -289,9 +335,13 @@ const webhook = asyncHandler(async (req, res) => {
           payment.refundedAmount = Number(refund.amount || 0) / 100;
           payment.refundInitiatedAt = new Date();
           payment.refundedAt = refund.status === "processed" ? new Date() : null;
-          payment.failureReason = "Payment captured after inventory reservation expiry; refund initiated.";
+          payment.refundReason = "Out of stock — order cancelled";
+          payment.failureReason = "Item was out of stock after payment capture; refund initiated.";
           await payment.save();
         } catch (_) {}
+        // Make sure this shows up for the customer as a refunded order
+        // instead of vanishing because paymentVerifiedAt was never set.
+        await Order.updateOne({ _id: payment.order, paymentVerifiedAt: null }, { $set: { paymentVerifiedAt: new Date() } });
       }
     }
   } else if (event.event === "payment.failed" && !["paid", "refunded"].includes(payment.status)) {

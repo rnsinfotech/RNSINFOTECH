@@ -34,11 +34,19 @@ export function canDownloadInvoice(order) {
 export function getOrderStatus(order) {
   const status = order.status || "pending";
   if (status === "cancelled") {
+    // A cancelled order whose payment was actually captured and then
+    // reversed (e.g. the item went out of stock after payment) is a
+    // different situation for the customer than a plain cancellation —
+    // their money moved and came back. Surface that distinctly using
+    // paymentStatus, which order.controller.js's attachPaymentStatus
+    // always computes from the linked Payment record.
+    const isRefunded = order.paymentStatus === "refunded";
     return {
       currentIndex: -1,
-      currentStage: { key: status, label: "Cancelled" },
+      currentStage: { key: status, label: isRefunded ? "Refunded" : "Cancelled" },
       isShipped: false,
       isCancelled: true,
+      isRefunded,
       isTerminal: true,
       cancelReason: order.cancelReason || null,
       cancelledAt: order.cancelledAt || null,
