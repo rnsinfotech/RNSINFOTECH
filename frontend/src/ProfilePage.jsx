@@ -36,13 +36,17 @@ export default function ProfilePage() {
   const [adding, setAdding] = useState(false);
   const [editingAddrId, setEditingAddrId] = useState(null);
 
-  function handleSaveProfile() {
+  async function handleSaveProfile() {
     if (!nameDraft.trim()) return;
     if (!/^\d{10}$/.test(phoneDraft.trim())) {
       setPhoneError("Enter a valid 10-digit phone number");
       return;
     }
-    updateProfile({ name: nameDraft.trim(), phone: phoneDraft.trim() });
+    const result = await updateProfile({ name: nameDraft.trim(), phone: phoneDraft.trim() });
+    if (!result.ok) {
+      setPhoneError(result.error || "Couldn't save your details. Please try again.");
+      return;
+    }
     setPhoneError("");
     setEditing(false);
   }

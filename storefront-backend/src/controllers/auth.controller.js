@@ -14,7 +14,20 @@ const REFRESH_HASH_ROUNDS = 10;
 
 // POST /api/auth/request-otp
 const requestOtp = asyncHandler(async (req, res) => {
-  const { email } = req.body;
+  const { email, intent } = req.body;
+
+  // Same guard as verify-otp: a login attempt against an email with no
+  // account shouldn't even get an OTP sent — that just spams an inbox
+  // and confuses the person, since verify-otp would reject them anyway.
+  // Only check for "login"; a missing/unspecified intent still gets the
+  // OTP (kept permissive for the /verify-email resend button, which may
+  // not always know the original intent yet).
+  if (intent === "login") {
+    const existing = await User.findOne({ email });
+    if (!existing) {
+      throw ApiError.notFound("No account found for this email. Please sign up first.", { code: "ACCOUNT_NOT_FOUND" });
+    }
+  }
 
   // Anti-spam: if there's still a live, unconsumed code for this email,
   // don't let another one be requested until the cooldown passes — the
@@ -175,4 +188,17 @@ const me = asyncHandler(async (req, res) => {
   res.json({ user });
 });
 
-module.exports = { requestOtp, verifyOtp, refresh, logout, me };
+// PATCH /api/auth/me
+const updateMe = asyncHandler(async (req, res) => {
+  const { name, phone } = req.body;
+  const user = await User.findById(req.auth.userId);
+  if (!user) throw ApiError.notFound("User not found.");
+
+  if (name !== undefined) user.name = name;
+  if (phone !== undefined) user.phone = phone;
+  await user.save();
+
+  res.json({ user });
+});
+
+module.exports = { requestOtp, verifyOtp, refresh, logout, me, updateMe };

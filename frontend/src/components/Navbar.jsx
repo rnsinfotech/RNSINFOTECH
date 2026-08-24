@@ -93,6 +93,7 @@ function CompareLiveRegion() {
 export default function Navbar({ logo, links, cta }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const navRef = useRef(null);
   const { itemCount } = useCart();
   const { isAuthenticated, currentUser } = useAuth();
@@ -212,6 +213,25 @@ export default function Navbar({ logo, links, cta }) {
           </Link>
           <CompareAffordance />
           <button
+            onClick={() => setSearchOpen((v) => !v)}
+            aria-label={searchOpen ? "Close search" : "Open search"}
+            aria-expanded={searchOpen}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 38,
+              height: 38,
+              color: "var(--rns-ink)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            <Icon name={searchOpen ? "close" : "search"} size={20} />
+          </button>
+          <button
             onClick={toggleChat}
             aria-label={unreadCount > 0 ? `Support chat, ${unreadCount} new message` : "Support chat"}
             style={{
@@ -303,16 +323,18 @@ export default function Navbar({ logo, links, cta }) {
         </div>
       </div>
 
-      <div
-        style={{
-          borderTop: "1px solid var(--rns-line)",
-          background: "var(--rns-bg-alt)",
-        }}
-      >
-        <div className="rns-container" style={{ padding: "10px var(--rns-gutter)" }}>
-          <SearchBar />
+      {searchOpen && (
+        <div
+          style={{
+            borderTop: "1px solid var(--rns-line)",
+            background: "var(--rns-bg-alt)",
+          }}
+        >
+          <div className="rns-container" style={{ padding: "10px var(--rns-gutter)" }}>
+            <SearchBar autoFocus onClose={() => setSearchOpen(false)} />
+          </div>
         </div>
-      </div>
+      )}
 
       {open && (
         <div

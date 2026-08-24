@@ -3,7 +3,7 @@ const { Router } = require("express");
 const authController = require("../controllers/auth.controller");
 const validate = require("../middleware/validate");
 const requireAuth = require("../middleware/requireAuth");
-const { requestOtpSchema, verifyOtpSchema, refreshSchema } = require("../validators/auth.validators");
+const { requestOtpSchema, verifyOtpSchema, refreshSchema, updateMeSchema } = require("../validators/auth.validators");
 const { authRateLimit, otpRateLimit, otpVerifyRateLimit, otpDailyRateLimit } = require("../middleware/rateLimit");
 
 const router = Router();
@@ -13,5 +13,6 @@ router.post("/verify-otp", otpVerifyRateLimit, validate(verifyOtpSchema), authCo
 router.post("/refresh", authRateLimit, validate(refreshSchema), authController.refresh);
 router.post("/logout", requireAuth, authController.logout);
 router.get("/me", requireAuth, authController.me);
+router.patch("/me", requireAuth, validate(updateMeSchema), authController.updateMe);
 
 module.exports = router;

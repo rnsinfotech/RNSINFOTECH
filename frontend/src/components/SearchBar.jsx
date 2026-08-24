@@ -5,11 +5,16 @@ import { searchSite, useSearchIndex, TYPE_LABELS } from "../lib/search";
 
 const SUGGESTION_LIMIT = 7;
 
-export default function SearchBar() {
+export default function SearchBar({ autoFocus = false, onClose } = {}) {
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const containerRef = useRef(null);
+  const inputRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
 
   const index = useSearchIndex();
   const results = useMemo(() => searchSite(query, index, { limit: SUGGESTION_LIMIT }), [query, index]);
@@ -43,6 +48,7 @@ export default function SearchBar() {
     if (e.key === "Escape") {
       setFocused(false);
       e.currentTarget.blur();
+      onClose?.();
     }
   }
 
@@ -72,6 +78,7 @@ export default function SearchBar() {
             <Icon name="search" size={16} />
           </span>
           <input
+            ref={inputRef}
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -96,6 +103,16 @@ export default function SearchBar() {
               style={{ background: "none", border: "none", color: "var(--rns-ink-faint)", cursor: "pointer", display: "flex" }}
             >
               <Icon name="close" size={14} />
+            </button>
+          )}
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close search"
+              style={{ background: "none", border: "none", color: "var(--rns-ink-faint)", cursor: "pointer", display: "flex" }}
+            >
+              <Icon name="close" size={16} />
             </button>
           )}
         </div>

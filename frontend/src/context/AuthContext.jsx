@@ -54,11 +54,12 @@ export function AuthProvider({ children }) {
     requestOtp: async (email, intent) => {
       const normalizedEmail = String(email || "").trim().toLowerCase();
       if (!normalizedEmail) return { ok: false, error: "Email is required." };
+      const resolvedIntent = intent || pendingVerification?.intent || "login";
 
       try {
         const response = await apiRequest("/auth/request-otp", {
           method: "POST",
-          body: { email: normalizedEmail },
+          body: { email: normalizedEmail, intent: resolvedIntent },
         });
 
         setPendingVerification({
@@ -70,7 +71,7 @@ export function AuthProvider({ children }) {
           // Which page this OTP request came from — gates whether
           // verify-otp is allowed to create a new account. Falls back to
           // "login" (the safer default) if unspecified.
-          intent: intent || pendingVerification?.intent || "login",
+          intent: resolvedIntent,
         });
 
         return { ok: true, devCode: response.devCode || null };
@@ -177,15 +178,24 @@ export function AuthProvider({ children }) {
       return { ok: true };
     },
 
-    updateProfile: (patch) => {
-      const nextUser = { ...(currentUser || {}), ...patch };
-      setCurrentUser(nextUser);
-      setStoredAuth({
-        accessToken: getStoredAccessToken(),
-        refreshToken: localStorage.getItem("rns_storefront_refresh_token_v1"),
-        user: nextUser,
-      });
-      return { ok: true, user: nextUser };
+    updateProfile: async (patch) => {
+      try {
+        const response = await apiRequest("/auth/me", {
+          method: "PATCH",
+          authRequired: true,
+          body: patch,
+        });
+        const normalized = normalizeUser(response.user);
+        setCurrentUser(normalized);
+        setStoredAuth({
+          accessToken: getStoredAccessToken(),
+          refreshToken: localStorage.getItem("rns_storefront_refresh_token_v1"),
+          user: normalized,
+        });
+        return { ok: true, user: normalized };
+      } catch (error) {
+        return { ok: false, error: error.message, code: error.code };
+      }
     },
   }), [currentUser, pendingVerification, hydrated]);
 

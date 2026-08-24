@@ -2,6 +2,7 @@ const { z } = require("zod");
 
 const requestOtpSchema = z.object({
   email: z.string().trim().toLowerCase().email("Enter a valid email address."),
+  intent: z.enum(["login", "signup"]).optional(),
 });
 
 const verifyOtpSchema = z.object({
@@ -24,4 +25,13 @@ const refreshSchema = z.object({
   refreshToken: z.string().min(10, "refreshToken is required."),
 });
 
-module.exports = { requestOtpSchema, verifyOtpSchema, refreshSchema };
+const updateMeSchema = z.object({
+  name: z.string().trim().min(1).max(100).optional(),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\d{10}$/, "Enter a valid 10-digit phone number.")
+    .optional(),
+});
+
+module.exports = { requestOtpSchema, verifyOtpSchema, refreshSchema, updateMeSchema };
