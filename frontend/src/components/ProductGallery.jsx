@@ -38,7 +38,7 @@ export default function ProductGallery({ images, name }) {
           <img
             src={safeImages[activeImage]}
             alt={name}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            style={{ width: "100%", height: "100%", objectFit: "contain" }}
           />
         ) : (
           <span style={{ color: "var(--rns-ink-faint)", fontSize: 13 }}>No image available</span>
@@ -77,7 +77,7 @@ export default function ProductGallery({ images, name }) {
               <img
                 src={img}
                 alt=""
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                style={{ width: "100%", height: "100%", objectFit: "contain" }}
               />
             </button>
           ))}

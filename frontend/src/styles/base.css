@@ -279,3 +279,41 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
     font-size: 16px !important;
   }
 }
+
+/* rns-rich-content — renders admin-authored product description HTML
+   (see ProductDetailPage). Images are shown at full block width — never
+   tiny or cropped — so a full-size product photo dropped into the
+   description reads as intended, not squeezed into a caption thumbnail. */
+.rns-rich-content h2, .rns-rich-content h3, .rns-rich-content h4 {
+  margin: 20px 0 10px;
+  font-family: var(--rns-font-display);
+  color: var(--rns-ink);
+  line-height: 1.3;
+}
+.rns-rich-content h2 { font-size: 22px; }
+.rns-rich-content h3 { font-size: 18px; }
+.rns-rich-content h4 { font-size: 15.5px; }
+.rns-rich-content p { margin: 0 0 14px; }
+.rns-rich-content ul, .rns-rich-content ol { margin: 0 0 14px; padding-left: 22px; }
+.rns-rich-content li { margin-bottom: 4px; }
+.rns-rich-content blockquote {
+  margin: 0 0 14px;
+  padding: 10px 18px;
+  border-left: 3px solid var(--rns-primary);
+  background: var(--rns-bg-alt);
+  color: var(--rns-ink-soft);
+}
+.rns-rich-content a { color: var(--rns-primary); text-decoration: underline; }
+.rns-rich-content img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--rns-r-md);
+  margin: 16px 0;
+}
+/* Images without an explicit width (older plain-text descriptions saved
+   before the rich editor, or a stripped style attribute) still default
+   to filling the content column rather than rendering at native size. */
+.rns-rich-content img:not([style*="width"]) {
+  width: 100%;
+}

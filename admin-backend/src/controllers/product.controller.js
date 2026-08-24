@@ -4,7 +4,8 @@ const Category = require("../models/Category");
 const ApiError = require("../utils/ApiError");
 const asyncHandler = require("../utils/asyncHandler");
 const slugify = require("../utils/slugify");
-const { uploadBuffer, destroyImage } = require("../services/upload.service");
+const { uploadBuffer, destroyImage, PRODUCT_IMAGE_TRANSFORM } = require("../services/upload.service");
+const sanitizeDescription = require("../utils/sanitizeDescription");
 
 async function uniqueSlug(base, excludeId) {
   let slug = base;
@@ -120,7 +121,8 @@ const create = asyncHandler(async (req, res) => {
     curation[orderField] = resolved.order;
   }
 
-  const product = await Product.create({ ...req.body, slug, sku, ...curation });
+  const description = sanitizeDescription(req.body.description);
+  const product = await Product.create({ ...req.body, description, slug, sku, ...curation });
   res.status(201).json({ product });
 });
 
@@ -134,6 +136,9 @@ const update = asyncHandler(async (req, res) => {
     product.slug = await uniqueSlug(base, product._id);
   }
   if (req.body.sku) req.body.sku = req.body.sku.toUpperCase();
+  if (Object.prototype.hasOwnProperty.call(req.body, "description")) {
+    req.body.description = sanitizeDescription(req.body.description);
+  }
 
   for (const [flagField, orderField] of HOMEPAGE_RAILS) {
     const flagProvided = Object.prototype.hasOwnProperty.call(req.body, flagField);
@@ -162,6 +167,19 @@ const remove = asyncHandler(async (req, res) => {
   res.status(204).send();
 });
 
+// Images embedded inside the rich-text "full description" (not the
+// product gallery). Decoupled from a product id — and from the gallery's
+// 12-image cap and add/replace/delete lifecycle — because the editor
+// needs to upload an image the moment it's dropped in, including while
+// creating a brand-new product that doesn't have an id yet. The
+// resulting URL is just referenced inside the sanitized description
+// HTML; nothing here touches product.images.
+const uploadDescriptionImage = asyncHandler(async (req, res) => {
+  if (!req.file) throw ApiError.badRequest("An image file is required.");
+  const uploaded = await uploadBuffer(req.file.buffer, "rns/products/description", { transformation: PRODUCT_IMAGE_TRANSFORM });
+  res.status(201).json({ url: uploaded.url, publicId: uploaded.publicId });
+});
+
 const addImages = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (!product) throw ApiError.notFound("Product not found.");
@@ -170,7 +188,7 @@ const addImages = asyncHandler(async (req, res) => {
 
   const uploaded = [];
   try {
-    for (const file of req.files) uploaded.push(await uploadBuffer(file.buffer, "rns/products"));
+    for (const file of req.files) uploaded.push(await uploadBuffer(file.buffer, "rns/products", { transformation: PRODUCT_IMAGE_TRANSFORM }));
     product.images.push(...uploaded);
     await product.save();
   } catch (err) {
@@ -188,7 +206,7 @@ const replaceImage = asyncHandler(async (req, res) => {
   if (!req.file) throw ApiError.badRequest("An image file is required.");
 
   const oldPublicId = image.publicId;
-  const uploaded = await uploadBuffer(req.file.buffer, "rns/products");
+  const uploaded = await uploadBuffer(req.file.buffer, "rns/products", { transformation: PRODUCT_IMAGE_TRANSFORM });
   try {
     image.url = uploaded.url;
     image.publicId = uploaded.publicId;
@@ -242,4 +260,4 @@ const bulkAction = asyncHandler(async (req, res) => {
   return res.json({ action, deleted: result.deletedCount });
 });
 
-module.exports = { list, getById, create, update, remove, addImages, replaceImage, removeImage, bulkAction };
+module.exports = { list, getById, create, update, remove, addImages, replaceImage, removeImage, bulkAction, uploadDescriptionImage };

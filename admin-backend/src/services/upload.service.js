@@ -13,12 +13,26 @@ cloudinary.config({
 // functions here are the only place in the app that talks to Cloudinary
 // directly. Swapping providers later (e.g. S3) only touches this file.
 
-function uploadBuffer(buffer, folder) {
+// Cap stored dimensions and let Cloudinary pick the best format/quality
+// per requesting browser (auto WebP/AVIF where supported). Applied at
+// upload time — not just as a delivery-time transform — so the stored
+// asset itself is never larger than a product photo needs to be,
+// regardless of what the original upload was (a 6000px source photo and
+// a 2000px one end up costing the same to serve).
+const PRODUCT_IMAGE_TRANSFORM = [
+  { width: 2000, height: 2000, crop: "limit" },
+  { quality: "auto", fetch_format: "auto" },
+];
+
+function uploadBuffer(buffer, folder, options = {}) {
   return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream({ folder, resource_type: "image" }, (err, result) => {
-      if (err) return reject(err);
-      resolve({ url: result.secure_url, publicId: result.public_id });
-    });
+    const stream = cloudinary.uploader.upload_stream(
+      { folder, resource_type: "image", ...options },
+      (err, result) => {
+        if (err) return reject(err);
+        resolve({ url: result.secure_url, publicId: result.public_id });
+      }
+    );
     stream.end(buffer);
   });
 }
@@ -35,4 +49,4 @@ async function destroyImage(publicId) {
   }
 }
 
-module.exports = { uploadBuffer, destroyImage };
+module.exports = { uploadBuffer, destroyImage, PRODUCT_IMAGE_TRANSFORM };

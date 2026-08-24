@@ -8,6 +8,7 @@ import { getProduct, createProduct, updateProduct, uploadProductImages, replaceP
 import { getCategories } from "../../services/categoriesService";
 import { getBrands } from "../../services/brandsService";
 import PageLoader from "../../components/PageLoader";
+import RichTextEditor from "../../components/RichTextEditor";
 
 // Suggestions only — tags[] is freeform (search/filtering elsewhere),
 // fully decoupled from homepage curation. Featured & Best Sellers are
@@ -280,8 +281,10 @@ export default function ProductFormPage() {
         </div>
 
         <div className="admin-form-section"><h3>Media &amp; description</h3><div className="admin-form-grid">
-          <FormField label="Short description" htmlFor="shortDescription" full><textarea id="shortDescription" className="admin-textarea" style={{ minHeight: 56 }} value={form.shortDescription} onChange={(e) => set("shortDescription", e.target.value)} /></FormField>
-          <FormField label="Full description" htmlFor="description" full><textarea id="description" className="admin-textarea" value={form.description} onChange={(e) => set("description", e.target.value)} /></FormField>
+          <FormField label="Short description" htmlFor="shortDescription" full hint="Plain text — used in listing cards, search results, and SEO snippets."><textarea id="shortDescription" className="admin-textarea" style={{ minHeight: 56 }} value={form.shortDescription} onChange={(e) => set("shortDescription", e.target.value)} /></FormField>
+          <FormField label="Full description" htmlFor="description" full hint="Shown on the product page. Format text and drop in full-size images — they'll display at full page width on the storefront.">
+            <RichTextEditor value={form.description} onChange={(html) => set("description", html)} />
+          </FormField>
         </div></div>
 
         <div className="admin-form-section"><h3>Highlights</h3>{form.highlights.map((h, i) => <div className="admin-dyn-row" key={i}><input className="admin-input" value={h} onChange={(e) => setHighlight(i, e.target.value)} placeholder="e.g. 8,192 pressure levels with tilt recognition" /><button type="button" className="admin-icon-btn admin-icon-btn--danger" onClick={() => removeHighlight(i)} aria-label="Remove highlight"><Icon name="close" size={13} /></button></div>)}<button type="button" className="admin-btn admin-btn--ghost admin-btn--sm" onClick={addHighlight}><Icon name="plus" size={13} /> Add highlight</button></div>

@@ -33,7 +33,9 @@ const productSchema = new mongoose.Schema(
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true, index: true },
     brand: { type: String, trim: true, default: "" },
     productType: { type: String, enum: PRODUCT_TYPES, default: "Pen Tablet" },
-    description: { type: String, trim: true, default: "" },
+    // Rich-text HTML authored and sanitized on the admin side; rendered
+    // as-is on the storefront product page.
+    description: { type: String, trim: true, default: "", maxlength: 50000 },
     shortDescription: { type: String, trim: true, default: "", maxlength: 200 },
     images: { type: [productImageSchema], default: [] },
     price: { type: Number, required: true, min: 0 },

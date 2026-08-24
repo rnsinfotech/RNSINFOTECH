@@ -18,7 +18,11 @@ const createProductSchema = z.object({
   category: z.string().trim().regex(OBJECT_ID_RE, "category must be a valid id"),
   brand: z.string().trim().min(1).max(100).optional().default(""),
   productType: z.enum(Product.PRODUCT_TYPES).optional(),
-  description: z.string().trim().optional().default(""),
+  // Full description is authored as rich-text HTML (headings, lists, links,
+  // embedded images) — 50,000 chars comfortably covers a long, image-heavy
+  // description while still guarding against pathological payloads. It's
+  // sanitized server-side (see utils/sanitizeDescription.js) before saving.
+  description: z.string().trim().max(50000).optional().default(""),
   shortDescription: z.string().trim().max(200).optional().default(""),
   price: z.coerce.number().min(0),
   mrp: z.coerce.number().min(0),
@@ -45,7 +49,7 @@ const updateProductSchema = z.object({
   category: z.string().trim().regex(OBJECT_ID_RE, "category must be a valid id"),
   brand: z.string().trim().min(1).max(100),
   productType: z.enum(Product.PRODUCT_TYPES),
-  description: z.string().trim(),
+  description: z.string().trim().max(50000),
   shortDescription: z.string().trim().max(200),
   price: z.coerce.number().min(0),
   mrp: z.coerce.number().min(0),

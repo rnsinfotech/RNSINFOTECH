@@ -37,7 +37,10 @@ const productSchema = new mongoose.Schema(
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true, index: true },
     brand: { type: String, trim: true, default: "" },
     productType: { type: String, enum: PRODUCT_TYPES, default: "Pen Tablet" },
-    description: { type: String, trim: true, default: "" },
+    // Rich-text HTML (headings, lists, links, embedded images) authored in
+    // the admin portal's description editor; sanitized on save (see
+    // utils/sanitizeDescription.js) before ever reaching the storefront.
+    description: { type: String, trim: true, default: "", maxlength: 50000 },
     shortDescription: { type: String, trim: true, default: "", maxlength: 200 },
     images: { type: [productImageSchema], default: [], validate: { validator: (images) => images.length <= 12, message: "A product may have at most 12 images." } },
     price: { type: Number, required: true, min: 0 },

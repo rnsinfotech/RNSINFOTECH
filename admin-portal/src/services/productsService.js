@@ -149,6 +149,17 @@ export async function uploadProductImages(id, files, { onProgress } = {}) {
   return payload?.product ? normalizeProduct(payload.product) : null;
 }
 
+// Uploads an image referenced inside the rich-text "full description"
+// field (see RichTextEditor). Not tied to a product id, so it works even
+// while creating a brand-new product, and it doesn't touch the product's
+// image gallery — the returned URL is just embedded in the description
+// HTML by the editor.
+export async function uploadDescriptionImage(file, { onProgress } = {}) {
+  const formData = new FormData();
+  formData.append("image", file, file.name);
+  return adminApiUpload("/products/description-images", formData, { onProgress });
+}
+
 export async function replaceProductImage(id, imageId, file, { onProgress } = {}) {
   const formData = new FormData();
   formData.append("image", file, file.name);

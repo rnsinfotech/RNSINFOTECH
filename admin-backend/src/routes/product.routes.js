@@ -16,6 +16,7 @@ router.get("/", validate(listQuerySchema, "query"), productController.list);
 router.post("/bulk", sensitiveRateLimit, requirePermission("catalog.write"), validate(bulkActionSchema), productController.bulkAction);
 router.get("/:id", validateParam("id"), productController.getById);
 router.post("/", requirePermission("catalog.write"), validate(createProductSchema), productController.create);
+router.post("/description-images", requirePermission("catalog.write"), upload.single("image"), productController.uploadDescriptionImage);
 router.patch("/:id", validateParam("id"), requirePermission("catalog.write"), validate(updateProductSchema), productController.update);
 router.delete("/:id", validateParam("id"), requirePermission("catalog.write"), productController.remove);
 router.post("/:id/images", validateParam("id"), requirePermission("catalog.write"), upload.array("images", 6), productController.addImages);

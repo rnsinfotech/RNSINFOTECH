@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import DOMPurify from "dompurify";
 
 import AnnouncementBar from "./components/AnnouncementBar";
 import Navbar from "./components/Navbar";
@@ -291,6 +292,15 @@ export default function ProductDetailPage() {
     rating,
     reviewCount,
   } = product;
+
+  // description is admin-authored rich-text HTML, already sanitized
+  // server-side on save (see admin-backend/src/utils/sanitizeDescription.js);
+  // sanitizing again here is a cheap second layer of defense before it's
+  // rendered with dangerouslySetInnerHTML on this public page.
+  const sanitizedDescription = useMemo(
+    () => DOMPurify.sanitize(description || "", { ALLOWED_TAGS: ["p", "br", "strong", "b", "em", "i", "u", "s", "strike", "h1", "h2", "h3", "h4", "ul", "ol", "li", "a", "img", "blockquote", "hr", "span"], ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "width", "height", "style", "class"] }),
+    [description]
+  );
 
   const discount = mrp && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : null;
   const comparing = isComparing(id);
@@ -644,9 +654,11 @@ export default function ProductDetailPage() {
               <h2 className="rns-section-title" style={{ fontSize: 20 }}>
                 Description
               </h2>
-              <p style={{ marginTop: 14, fontSize: 14.5, color: "var(--rns-ink-soft)", lineHeight: 1.7 }}>
-                {description}
-              </p>
+              <div
+                className="rns-rich-content"
+                style={{ marginTop: 14, fontSize: 14.5, color: "var(--rns-ink-soft)", lineHeight: 1.7 }}
+                dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
+              />
             </div>
 
             <div>

@@ -205,6 +205,33 @@ const PATHS = {
       <path d="M3 9.5h18M8 3v4M16 3v4" />
     </>
   ),
+  // Rich-text editor toolbar icons (RichTextEditor component).
+  bold: <path d="M6 4h7a3.5 3.5 0 010 7H6zM6 11h8a3.5 3.5 0 010 7H6z" />,
+  italic: <path d="M11 4h6M5 20h6M14 4L8 20" />,
+  heading: <path d="M5 4v16M17 4v16M5 12h12" />,
+  quote: (
+    <>
+      <path d="M7 8a3 3 0 00-3 3v2a3 3 0 003 3V8zM17 8a3 3 0 00-3 3v2a3 3 0 003 3V8z" />
+    </>
+  ),
+  listOrdered: <path d="M9 6h12M9 12h12M9 18h12M4 5v3M4 8H3.5M4 13a1 1 0 10-1 1M4 19h2M3 16h2v3H3" />,
+  link: (
+    <>
+      <path d="M9.5 14.5l5-5" />
+      <path d="M13 5l1.5-1.5a3.5 3.5 0 015 5L18 10M11 19l-1.5 1.5a3.5 3.5 0 01-5-5L6 14" />
+    </>
+  ),
+  unlink: (
+    <>
+      <path d="M9.5 14.5l1-1M13.5 10.5l1-1" />
+      <path d="M13 5l1.5-1.5a3.5 3.5 0 015 5L18 10M11 19l-1.5 1.5a3.5 3.5 0 01-5-5L6 14" />
+      <path d="M3 3l18 18" />
+    </>
+  ),
+  undo2: <path d="M4 10h11a5 5 0 010 10H9M4 10l5-5M4 10l5 5" />,
+  redo2: <path d="M20 10H9a5 5 0 000 10h6M20 10l-5-5M20 10l-5 5" />,
+  alignLeft: <path d="M4 6h16M4 12h10M4 18h14" />,
+  alignCenter: <path d="M4 6h16M7 12h10M5 18h14" />,
 };
 
 export default function Icon({ name, size = 20, strokeWidth = 1.5, className = "", style }) {
