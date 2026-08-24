@@ -17,7 +17,7 @@ export default function PageLoader({ visible = true }) {
       aria-label="Loading RNS INFOTECH"
     >
       <div className="rns-splash-loader__mark">
-        <img src="/assets/rns_logo.jpg" alt="" className="rns-splash-loader__logo" />
+        <img src="/rns_logo.jpg" alt="" className="rns-splash-loader__logo" />
       </div>
 
       <style>{`

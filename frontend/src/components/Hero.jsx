@@ -107,7 +107,7 @@ export default function Hero({ eyebrow, title, subtitle, primaryCta, secondaryCt
           }}
         >
           <img
-            src="/assets/rns_hero.png"
+            src="/rns_hero.png"
             alt=""
             style={{
               width: "70%",

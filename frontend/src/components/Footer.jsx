@@ -186,7 +186,7 @@ export default function Footer({ logo, about, columns, legal, newsletter, social
                   lineHeight: 0,
                 }}
               >
-                <img src="/assets/rns_logo.jpg" alt="" style={{ height: 22, display: "block" }} />
+                <img src="/rns_logo.jpg" alt="" style={{ height: 22, display: "block" }} />
               </span>
               <span style={{ fontFamily: "var(--rns-font-display)", fontWeight: 700, fontSize: 16.5, color: "#fff", letterSpacing: "-0.01em" }}>
                 {logo}

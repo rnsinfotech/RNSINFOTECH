@@ -159,7 +159,7 @@ export default function Navbar({ logo, links, cta }) {
             flexShrink: 0,
           }}
         >
-          <img src="/assets/rns_logo.jpg"
+          <img src="/rns_logo.jpg"
           alt="RNS INFOTECH"
           style={{
             height:"60px",
