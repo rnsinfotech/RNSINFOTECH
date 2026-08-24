@@ -125,14 +125,11 @@ export default function ProductDetailPage() {
           {product.packageContents?.length > 0 && (
             <div className="admin-card">
               <h3 style={{ fontSize: 14, marginBottom: 12 }}>Package contents</h3>
-              <div className="admin-kv-list">
+              <ul style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 8, fontSize: 13.5 }}>
                 {product.packageContents.map((p, i) => (
-                  <div key={p.id || i}>
-                    <span>{p.name}</span>
-                    <span>{p.description || "—"}</span>
-                  </div>
+                  <li key={i}>{p}</li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
 

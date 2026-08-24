@@ -31,19 +31,9 @@ const productDownloadLinkSchema = new mongoose.Schema(
 
 // "What's in the box" — the physical items that ship with the product,
 // shown on the storefront product page alongside Description and
-// Specifications. Distinct from `highlights` (marketing bullet points
-// about the product itself) and `specifications` (spec-sheet data) —
-// this is literally the packing list, so each entry gets its own short
-// description (e.g. name: "Pen Tablet", description: "10 x 6 in active
-// area, USB-C") rather than reusing either of those fields. Capped at
-// 20 for the same reason as highlights/downloadLinks.
-const packageContentSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true, trim: true, maxlength: 100 },
-    description: { type: String, trim: true, default: "", maxlength: 300 },
-  },
-  { _id: true }
-);
+// Specifications. Just item names (e.g. "Pen Tablet", "USB-C cable",
+// "Quick start guide") — same shape as `highlights` below, capped at 20
+// for the same reason.
 
 const productSchema = new mongoose.Schema(
   {
@@ -87,9 +77,9 @@ const productSchema = new mongoose.Schema(
       default: [],
       validate: { validator: (links) => links.length <= 20, message: "A product may have at most 20 download links." },
     },
-    // "What's in the box" — see packageContentSchema above.
+    // "What's in the box" — see the note above.
     packageContents: {
-      type: [packageContentSchema],
+      type: [{ type: String, trim: true, maxlength: 100 }],
       default: [],
       validate: { validator: (items) => items.length <= 20, message: "A product may have at most 20 package content items." },
     },

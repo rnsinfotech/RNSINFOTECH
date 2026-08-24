@@ -330,11 +330,9 @@ export function normalizeProduct(product = {}) {
     downloadLinks: Array.isArray(product.downloadLinks)
       ? product.downloadLinks.map((d) => ({ id: d._id || d.id || "", label: d.label || "", url: d.url || "" })).filter((d) => d.label && d.url)
       : [],
-    // "What's in the box" — see ProductDetailPage's own section for
-    // where this renders, separate from Description/Specifications.
-    packageContents: Array.isArray(product.packageContents)
-      ? product.packageContents.map((p) => ({ id: p._id || p.id || "", name: p.name || "", description: p.description || "" })).filter((p) => p.name)
-      : [],
+    // "What's in the box" item names — see ProductDetailPage's own
+    // section for where this renders, separate from Description/Specifications.
+    packageContents: Array.isArray(product.packageContents) ? product.packageContents.filter(Boolean) : [],
     rating: Number(product.rating || 0),
     reviewCount: Number(product.reviewCount || 0),
     reviews: product.reviews || [],

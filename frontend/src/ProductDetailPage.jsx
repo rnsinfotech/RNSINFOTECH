@@ -711,10 +711,10 @@ export default function ProductDetailPage() {
               </ul>
             ) : infoTab === "package" && packageContents.length > 0 ? (
               <ul id="panel-package" role="tabpanel" aria-labelledby="tab-package" className="rns-spec-list">
-                {packageContents.map((p, i) => (
-                  <li key={p.id || i} className="rns-spec-list__item">
+                {packageContents.map((name, i) => (
+                  <li key={i} className="rns-spec-list__item">
                     <Icon name="package" size={14} className="rns-spec-list__icon" />
-                    <span><strong>{p.name}</strong>{p.description ? ` — ${p.description}` : ""}</span>
+                    <span>{name}</span>
                   </li>
                 ))}
               </ul>
