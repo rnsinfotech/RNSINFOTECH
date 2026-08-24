@@ -133,12 +133,13 @@ export const footer = {
     placeholder: "you@studio.com",
     cta: "Subscribe",
   },
+  // Placeholder hrefs ("#") until real social profile URLs exist.
   social: [
-    { name: "Instagram", href: "https://www.instagram.com/rnsinfotech22/?hl=en", icon: "instagram" },
-    { name: "Facebook", href: "https://www.facebook.com/profile.php?id=100064030033012", icon: "facebook" },
-    { name: "LinkedIn", href: "https://www.linkedin.com/feed/", icon: "linkedin" },
-    { name: "YouTube", href: "https://www.youtube.com/@RNSINFOTECH-l4e/shorts", icon: "youtube" },
-    { name: "Google", href: "https://g.co/kgs/AK3qE4", icon: "google" },
+    { name: "Instagram", href: "#", icon: "instagram" },
+    { name: "Facebook", href: "#", icon: "facebook" },
+    { name: "Twitter", href: "#", icon: "twitter" },
+    { name: "LinkedIn", href: "#", icon: "linkedin" },
+    { name: "YouTube", href: "#", icon: "youtube" },
   ],
 };
 

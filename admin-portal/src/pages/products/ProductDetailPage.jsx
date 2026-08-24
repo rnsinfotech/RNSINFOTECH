@@ -147,11 +147,14 @@ export default function ProductDetailPage() {
           {product.specs?.length > 0 && (
             <div className="admin-card">
               <h3 style={{ fontSize: 14, marginBottom: 12 }}>Specifications</h3>
-              <ul style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 8, fontSize: 13.5 }}>
+              <div className="admin-kv-list">
                 {product.specs.map((s, i) => (
-                  <li key={i}>{s}</li>
+                  <div key={i}>
+                    <span>{s.label}</span>
+                    <span>{s.value}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
 

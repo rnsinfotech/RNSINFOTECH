@@ -290,7 +290,14 @@ export function normalizeProduct(product = {}) {
   const categoryObj = product.category || {};
   const productImages = Array.isArray(product.images) ? product.images : [];
   const firstImage = productImages.length ? (typeof productImages[0] === "string" ? productImages[0] : productImages[0].url || "") : product.image || "";
-  const specs = Array.isArray(product.specifications) ? product.specifications : [];
+  const specs = Array.isArray(product.specifications)
+    ? product.specifications
+    : product.specifications && typeof product.specifications === "object"
+      ? Object.entries(product.specifications).map(([label, value]) => ({
+          label,
+          value: String(value ?? ""),
+        }))
+      : [];
   // tags[] is freeform (search/filtering elsewhere on the storefront) and
   // fully decoupled from homepage curation — Featured/Best Seller are
   // their own booleans below, not tag values. Kept as a full array
