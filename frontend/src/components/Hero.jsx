@@ -101,6 +101,8 @@ export default function Hero({ eyebrow, title, subtitle, primaryCta, secondaryCt
             minHeight: 320,
             position: "relative",
             overflow: "hidden",
+            display:"flex",
+            justifyContent:"center"
             // boxShadow: "var(--rns-shadow-lg)",
           }}
         >
@@ -108,7 +110,7 @@ export default function Hero({ eyebrow, title, subtitle, primaryCta, secondaryCt
             src="/assets/rns_hero.png"
             alt=""
             style={{
-              width: "100%",
+              width: "70%",
               height: "100%",
               minHeight: 420,
               objectFit: "contain",
