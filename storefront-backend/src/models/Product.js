@@ -25,6 +25,16 @@ const productDownloadLinkSchema = new mongoose.Schema(
   { _id: true }
 );
 
+// Mirrors admin-backend/src/models/Product.js — "what's in the box"
+// items shown on the storefront product page. Read-only here.
+const packageContentSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true, maxlength: 100 },
+    description: { type: String, trim: true, default: "", maxlength: 300 },
+  },
+  { _id: true }
+);
+
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -47,6 +57,9 @@ const productSchema = new mongoose.Schema(
     specifications: { type: Map, of: String, default: {} },
     tags: [{ type: String, trim: true, lowercase: true }],
     downloadLinks: { type: [productDownloadLinkSchema], default: [] },
+    // Mirrors admin-backend/src/models/Product.js — see that file for
+    // the field's reasoning. Read-only here.
+    packageContents: { type: [packageContentSchema], default: [] },
     // Written by admin-backend's Phase B6 review-moderation flow, read
     // here for product listing/detail display only.
     rating: { type: Number, default: 0, min: 0, max: 5 },

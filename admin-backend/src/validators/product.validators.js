@@ -11,6 +11,12 @@ const downloadLinkSchema = z.object({
   url: z.string().trim().url("Each download link must be a valid URL."),
 });
 
+// "What's in the box" — see the matching schema note in models/Product.js.
+const packageContentSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  description: z.string().trim().max(300).optional().default(""),
+});
+
 const createProductSchema = z.object({
   name: z.string().trim().min(2).max(150),
   slug: z.string().trim().toLowerCase().regex(SLUG_RE, "slug may only contain lowercase letters, numbers, and hyphens").optional(),
@@ -31,6 +37,7 @@ const createProductSchema = z.object({
   highlights: z.array(z.string().trim().min(1).max(200)).max(20).optional(),
   tags: z.array(z.string().trim().toLowerCase()).optional(),
   downloadLinks: z.array(downloadLinkSchema).max(20).optional(),
+  packageContents: z.array(packageContentSchema).max(20).optional(),
   isActive: z.coerce.boolean().optional(),
   // isFeatured/isBestSeller mark a product for a curated homepage rail;
   // the paired *Order fields are optional here because the controller
@@ -59,6 +66,7 @@ const updateProductSchema = z.object({
   highlights: z.array(z.string().trim().min(1).max(200)).max(20),
   tags: z.array(z.string().trim().toLowerCase()),
   downloadLinks: z.array(downloadLinkSchema).max(20),
+  packageContents: z.array(packageContentSchema).max(20),
   isActive: z.coerce.boolean(),
   isFeatured: z.coerce.boolean(),
   homepageFeaturedOrder: z.coerce.number().int().min(0),

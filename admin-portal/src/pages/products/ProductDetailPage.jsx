@@ -98,10 +98,43 @@ export default function ProductDetailPage() {
 
       <div className="admin-grid" style={{ gridTemplateColumns: "1.6fr 1fr" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {product.shortDescription && (
+            <div className="admin-card">
+              <h3 style={{ fontSize: 14, marginBottom: 10 }}>Short description</h3>
+              <p style={{ fontSize: 13.5, color: "var(--admin-ink-soft)", lineHeight: 1.6 }}>{product.shortDescription}</p>
+            </div>
+          )}
+
           <div className="admin-card">
-            <h3 style={{ fontSize: 14, marginBottom: 10 }}>Description</h3>
-            <p style={{ fontSize: 13.5, color: "var(--admin-ink-soft)", lineHeight: 1.6 }}>{product.description}</p>
+            <h3 style={{ fontSize: 14, marginBottom: 10 }}>Full description</h3>
+            {/* description is admin-authored rich-text HTML, sanitized server-side
+                on save (see admin-backend/src/utils/sanitizeDescription.js) before
+                it's ever stored — rendering it as plain text below showed the raw
+                HTML tags instead of the formatted content the admin actually wrote. */}
+            {product.description ? (
+              <div
+                className="admin-rich-content"
+                style={{ fontSize: 13.5, color: "var(--admin-ink-soft)", lineHeight: 1.6 }}
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            ) : (
+              <p style={{ fontSize: 13.5, color: "var(--admin-ink-faint)" }}>No description added yet.</p>
+            )}
           </div>
+
+          {product.packageContents?.length > 0 && (
+            <div className="admin-card">
+              <h3 style={{ fontSize: 14, marginBottom: 12 }}>Package contents</h3>
+              <div className="admin-kv-list">
+                {product.packageContents.map((p, i) => (
+                  <div key={p.id || i}>
+                    <span>{p.name}</span>
+                    <span>{p.description || "—"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {product.highlights?.length > 0 && (
             <div className="admin-card">

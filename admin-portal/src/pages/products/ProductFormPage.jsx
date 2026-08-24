@@ -22,7 +22,7 @@ const BLANK = {
   name: "", categoryId: "", brand: "", sku: "", price: "", mrp: "", tags: [], stockQty: "", status: "active",
   isFeatured: false, homepageFeaturedOrder: "", isBestSeller: false, homepageBestSellerOrder: "",
   shortDescription: "", description: "", highlights: [""], specs: [{ label: "", value: "" }],
-  downloadLinks: [{ label: "", url: "" }], images: [],
+  downloadLinks: [{ label: "", url: "" }], packageContents: [{ name: "", description: "" }], images: [],
 };
 
 function validateFile(file) {
@@ -74,6 +74,7 @@ export default function ProductFormPage() {
             homepageFeaturedOrder: product.homepageFeaturedOrder == null ? "" : String(product.homepageFeaturedOrder),
             homepageBestSellerOrder: product.homepageBestSellerOrder == null ? "" : String(product.homepageBestSellerOrder),
             downloadLinks: product.downloadLinks && product.downloadLinks.length ? product.downloadLinks : [{ label: "", url: "" }],
+            packageContents: product.packageContents && product.packageContents.length ? product.packageContents : [{ name: "", description: "" }],
             images: product.images || [],
           });
           setLoading(false);
@@ -102,6 +103,10 @@ export default function ProductFormPage() {
   function setDownloadLink(i, key, value) { setForm((f) => ({ ...f, downloadLinks: f.downloadLinks.map((d, idx) => (idx === i ? { ...d, [key]: value } : d)) })); }
   function addDownloadLink() { setForm((f) => ({ ...f, downloadLinks: [...f.downloadLinks, { label: "", url: "" }] })); }
   function removeDownloadLink(i) { setForm((f) => ({ ...f, downloadLinks: f.downloadLinks.filter((_, idx) => idx !== i) })); }
+
+  function setPackageContent(i, key, value) { setForm((f) => ({ ...f, packageContents: f.packageContents.map((p, idx) => (idx === i ? { ...p, [key]: value } : p)) })); }
+  function addPackageContent() { setForm((f) => ({ ...f, packageContents: [...f.packageContents, { name: "", description: "" }] })); }
+  function removePackageContent(i) { setForm((f) => ({ ...f, packageContents: f.packageContents.filter((_, idx) => idx !== i) })); }
 
   function addTag(raw) {
     const value = (raw ?? tagInput).trim().toLowerCase();
@@ -197,6 +202,9 @@ export default function ProductFormPage() {
       downloadLinks: form.downloadLinks
         .map((d) => ({ label: d.label.trim(), url: d.url.trim() }))
         .filter((d) => d.label && d.url),
+      packageContents: form.packageContents
+        .map((p) => ({ name: p.name.trim(), description: p.description.trim() }))
+        .filter((p) => p.name),
     };
     setSaving(true);
     try {
@@ -292,6 +300,8 @@ export default function ProductFormPage() {
         <div className="admin-form-section"><h3>Specifications</h3>{form.specs.map((s, i) => <div className="admin-dyn-row" key={i}><input className="admin-input" style={{ maxWidth: 180 }} value={s.label} onChange={(e) => setSpec(i, "label", e.target.value)} placeholder="Label" /><input className="admin-input" value={s.value} onChange={(e) => setSpec(i, "value", e.target.value)} placeholder="Value" /><button type="button" className="admin-icon-btn admin-icon-btn--danger" onClick={() => removeSpec(i)} aria-label="Remove spec"><Icon name="close" size={13} /></button></div>)}<button type="button" className="admin-btn admin-btn--ghost admin-btn--sm" onClick={addSpec}><Icon name="plus" size={13} /> Add spec</button></div>
 
         <div className="admin-form-section"><h3>Download links</h3><p style={{ fontSize: 12.5, color: "var(--admin-ink-faint)", marginTop: -4 }}>Link out to drivers, manuals, or setup guides hosted on the manufacturer's own website — shown on this product's page. Leave empty if none apply.</p>{form.downloadLinks.map((d, i) => <div className="admin-dyn-row" key={i}><input className="admin-input" style={{ maxWidth: 220 }} value={d.label} onChange={(e) => setDownloadLink(i, "label", e.target.value)} placeholder="Label, e.g. Driver (Windows/Mac)" /><input className="admin-input" type="url" value={d.url} onChange={(e) => setDownloadLink(i, "url", e.target.value)} placeholder="https://manufacturer.com/downloads/driver.exe" /><button type="button" className="admin-icon-btn admin-icon-btn--danger" onClick={() => removeDownloadLink(i)} aria-label="Remove download link"><Icon name="close" size={13} /></button></div>)}<button type="button" className="admin-btn admin-btn--ghost admin-btn--sm" onClick={addDownloadLink}><Icon name="plus" size={13} /> Add download link</button></div>
+
+        <div className="admin-form-section"><h3>Package contents</h3><p style={{ fontSize: 12.5, color: "var(--admin-ink-faint)", marginTop: -4 }}>What's physically in the box — shown as its own "What's in the box" section on the storefront product page, separate from Description and Specifications.</p>{form.packageContents.map((p, i) => <div className="admin-dyn-row" key={i}><input className="admin-input" style={{ maxWidth: 200 }} value={p.name} onChange={(e) => setPackageContent(i, "name", e.target.value)} placeholder="Item, e.g. Pen Tablet" /><input className="admin-input" value={p.description} onChange={(e) => setPackageContent(i, "description", e.target.value)} placeholder="Description, e.g. 10 x 6 in active area, USB-C cable included" /><button type="button" className="admin-icon-btn admin-icon-btn--danger" onClick={() => removePackageContent(i)} aria-label="Remove package content item"><Icon name="close" size={13} /></button></div>)}<button type="button" className="admin-btn admin-btn--ghost admin-btn--sm" onClick={addPackageContent}><Icon name="plus" size={13} /> Add item</button></div>
 
         <div className="admin-form-actions"><Link to={isEdit ? `/products/${id}` : "/products"} className="admin-btn admin-btn--ghost">Cancel</Link><button className="admin-btn admin-btn--primary" type="submit" disabled={saving || uploading}>{saving ? "Saving…" : isEdit ? "Save changes" : "Create product"}</button></div>
       </form>

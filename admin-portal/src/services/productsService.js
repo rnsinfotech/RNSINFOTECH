@@ -49,6 +49,11 @@ function normalizeProduct(product = {}) {
     downloadLinks: Array.isArray(product.downloadLinks)
       ? product.downloadLinks.map((d) => ({ id: d._id || d.id || "", label: d.label || "", url: d.url || "" }))
       : [],
+    // "What's in the box" items — see the matching schema note in
+    // admin-backend/src/models/Product.js.
+    packageContents: Array.isArray(product.packageContents)
+      ? product.packageContents.map((p) => ({ id: p._id || p.id || "", name: p.name || "", description: p.description || "" }))
+      : [],
     rating: Number(product.rating || 0),
     reviewCount: Number(product.reviewCount || 0),
     isFeatured: Boolean(product.isFeatured),
@@ -81,6 +86,9 @@ function toApiPayload(data) {
     specifications: Array.isArray(data.specs) ? Object.fromEntries(data.specs.filter((s) => s && s.label && s.value).map((s) => [s.label, s.value])) : {},
     downloadLinks: Array.isArray(data.downloadLinks)
       ? data.downloadLinks.filter((d) => d && d.label && d.url).map((d) => ({ label: String(d.label).trim(), url: String(d.url).trim() }))
+      : [],
+    packageContents: Array.isArray(data.packageContents)
+      ? data.packageContents.filter((p) => p && p.name).map((p) => ({ name: String(p.name).trim(), description: String(p.description || "").trim() }))
       : [],
   };
   // Only send an explicit order when the admin actually set one — leaving

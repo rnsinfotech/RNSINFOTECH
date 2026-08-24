@@ -307,6 +307,7 @@ export default function ProductDetailPage() {
     description,
     highlights,
     specs,
+    packageContents,
     rating,
     reviewCount,
   } = product;
@@ -684,9 +685,40 @@ export default function ProductDetailPage() {
                   Specifications
                 </button>
               )}
+              {packageContents.length > 0 && (
+                <button
+                  type="button"
+                  role="tab"
+                  id="tab-package"
+                  aria-selected={infoTab === "package"}
+                  aria-controls="panel-package"
+                  className={`rns-pdp-tab${infoTab === "package" ? " rns-pdp-tab--active" : ""}`}
+                  onClick={() => setInfoTab("package")}
+                >
+                  What's in the box
+                </button>
+              )}
             </div>
 
-            {infoTab === "description" || specs.length === 0 ? (
+            {infoTab === "specifications" && specs.length > 0 ? (
+              <ul id="panel-specifications" role="tabpanel" aria-labelledby="tab-specifications" className="rns-spec-list">
+                {specs.map((s, i) => (
+                  <li key={s.label || i} className="rns-spec-list__item">
+                    <Icon name="check" size={14} className="rns-spec-list__icon" />
+                    <span><strong>{s.label}:</strong> {s.value}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : infoTab === "package" && packageContents.length > 0 ? (
+              <ul id="panel-package" role="tabpanel" aria-labelledby="tab-package" className="rns-spec-list">
+                {packageContents.map((p, i) => (
+                  <li key={p.id || i} className="rns-spec-list__item">
+                    <Icon name="package" size={14} className="rns-spec-list__icon" />
+                    <span><strong>{p.name}</strong>{p.description ? ` — ${p.description}` : ""}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
               <div
                 id="panel-description"
                 role="tabpanel"
@@ -695,15 +727,6 @@ export default function ProductDetailPage() {
                 style={{ fontSize: 14.5, color: "var(--rns-ink-soft)", lineHeight: 1.7 }}
                 dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
               />
-            ) : (
-              <ul id="panel-specifications" role="tabpanel" aria-labelledby="tab-specifications" className="rns-spec-list">
-                {specs.map((s, i) => (
-                  <li key={s.label || i} className="rns-spec-list__item">
-                    <Icon name="check" size={14} className="rns-spec-list__icon" />
-                    <span>{s.value}</span>
-                  </li>
-                ))}
-              </ul>
             )}
           </div>
         </div>
