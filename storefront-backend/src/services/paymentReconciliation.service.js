@@ -20,6 +20,16 @@ async function reconcilePayment(payment) {
   const remotePayments = await listRazorpayOrderPayments(payment.razorpayOrderId);
   const captured = (remotePayments.items || []).find((p) => p.status === "captured");
 
+  // Backfill a missing method on an already-settled payment (e.g. rows
+  // from before verifyPayment started capturing it) — same fix as the
+  // webhook handler, reachable from the admin's "Reconcile" button so
+  // existing payments can self-heal without a separate migration.
+  if (captured && payment.status === "paid" && !payment.method && captured.method) {
+    payment.method = captured.method;
+    await payment.save();
+    result.changed = true;
+  }
+
   if (captured && !["paid", "refunded"].includes(payment.status)) {
     const order = await Order.findById(payment.order);
     // No time cutoff here either — reclaim the reservation (re-reserve the

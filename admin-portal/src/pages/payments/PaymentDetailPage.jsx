@@ -11,6 +11,7 @@ import { STATUS_TONE, statusLabel } from "../../utils/format";
 import PageLoader from "../../components/PageLoader";
 
 const METHOD_LABEL = { upi: "UPI", card: "Card", netbanking: "Netbanking", cod: "Cash on delivery" };
+const methodLabel = (method) => METHOD_LABEL[method] || "Unknown";
 
 function formatINR(n) {
   return "₹" + n.toLocaleString("en-IN");
@@ -73,7 +74,7 @@ export default function PaymentDetailPage() {
         <div>
           <h1>{payment.id}</h1>
           <p style={{ marginBottom: 8 }}>
-            {formatDateTime(payment.at)} · {METHOD_LABEL[payment.method]}
+            {formatDateTime(payment.at)} · {methodLabel(payment.method)}
           </p>
           <Badge tone={STATUS_TONE[payment.status]}>{statusLabel(payment.status)}</Badge>
         </div>
@@ -111,7 +112,7 @@ export default function PaymentDetailPage() {
             </div>
             <div>
               <span>Method</span>
-              <span>{METHOD_LABEL[payment.method]}</span>
+              <span>{methodLabel(payment.method)}</span>
             </div>
             <div>
               <span>Status</span>

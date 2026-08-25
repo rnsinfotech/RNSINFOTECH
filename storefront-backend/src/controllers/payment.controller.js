@@ -12,6 +12,7 @@ const { transitionOrder } = require("../services/orderLifecycle.service");
 const {
   createRazorpayOrder,
   createRazorpayRefund,
+  getRazorpayPayment,
   verifyPaymentSignature,
   verifyWebhookSignature,
 } = require("../services/razorpay.service");
@@ -259,7 +260,25 @@ const verifyPayment = asyncHandler(async (req, res) => {
     throw ApiError.conflict("This item went out of stock before your payment could be confirmed. It has been refunded automatically — check your order history for details.");
   }
 
-  const updated = await settlePaidPayment(payment, { paymentId: razorpayPaymentId });
+  // This is the fast client-side confirmation path — it runs immediately
+  // after Razorpay Checkout closes, well before the payment.captured
+  // webhook (the other caller of settlePaidPayment) typically arrives.
+  // Previously this called settlePaidPayment with no `method`, which set
+  // status to "paid" with method left null; by the time the webhook did
+  // arrive, its own "already paid, skip" guard meant the real method
+  // (card/netbanking/upi/etc.) never got backfilled — the field just
+  // stayed null forever. Fetch the real method from Razorpay directly so
+  // it's captured right away instead of depending on the webhook race.
+  let method = null;
+  try {
+    const paymentEntity = await getRazorpayPayment(razorpayPaymentId);
+    method = paymentEntity?.method || null;
+  } catch (_) {
+    // Non-fatal — the webhook's payment.captured handler will still try
+    // to backfill this below if it's missing.
+  }
+
+  const updated = await settlePaidPayment(payment, { paymentId: razorpayPaymentId, method });
   res.json({ payment: updated });
 });
 
@@ -313,6 +332,14 @@ const webhook = asyncHandler(async (req, res) => {
   if (!payment) return res.json({ received: true });
 
   if (event.event === "payment.captured") {
+    // Defense in depth: if verifyPayment already settled this payment but
+    // couldn't get the method (its Razorpay lookup failed, or this is an
+    // older row from before that fix shipped), backfill it now from the
+    // webhook payload rather than leaving it null indefinitely.
+    if (payment.status === "paid" && !payment.method && paymentEntity.method) {
+      payment.method = paymentEntity.method;
+      await payment.save();
+    }
     if (payment.status !== "paid" && payment.status !== "refunded") {
       const order = await Order.findById(payment.order);
       // Reclaim before attempting to settle, same as verifyPayment — no

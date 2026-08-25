@@ -8,7 +8,11 @@ function normalizePayment(payment = {}) {
     customerName: payment.user?.name || payment.customerName || "",
     customerEmail: payment.user?.email || payment.customerEmail || "",
     amount: Number(payment.amount || 0),
-    method: payment.method || "upi",
+    // Don't default a missing method to "upi" — that was masking payments
+    // whose real method (card/netbanking/etc.) hadn't been captured yet
+    // and made every one of them display as UPI regardless of what was
+    // actually used. Leave it null and let the UI show "Unknown".
+    method: payment.method || null,
     status: payment.status || "pending",
     refundStatus: payment.refundStatus || "none",
     refundId: payment.razorpayRefundId || null,

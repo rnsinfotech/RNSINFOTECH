@@ -63,6 +63,9 @@ async function listRazorpayOrdersByReceipt(receipt) {
 async function listRazorpayOrderPayments(razorpayOrderId) {
   return razorpayRequest(`/orders/${encodeURIComponent(razorpayOrderId)}/payments`, { method: "GET" });
 }
+async function getRazorpayPayment(razorpayPaymentId) {
+  return razorpayRequest(`/payments/${encodeURIComponent(razorpayPaymentId)}`, { method: "GET" });
+}
 async function listRazorpayPaymentRefunds(razorpayPaymentId) {
   return razorpayRequest(`/payments/${encodeURIComponent(razorpayPaymentId)}/refunds`, { method: "GET" });
 }
@@ -84,6 +87,7 @@ module.exports = {
   createRazorpayOrder,
   createRazorpayRefund,
   getRazorpayOrder,
+  getRazorpayPayment,
   listRazorpayOrderPayments,
   listRazorpayPaymentRefunds,
   listRazorpayOrdersByReceipt,

@@ -18,6 +18,7 @@ const STATUS_TABS = [
 ];
 
 const METHOD_LABEL = { upi: "UPI", card: "Card", netbanking: "Netbanking", cod: "Cash on delivery" };
+const methodLabel = (method) => METHOD_LABEL[method] || "Unknown";
 
 function formatINR(n) {
   return "₹" + n.toLocaleString("en-IN");
@@ -123,7 +124,7 @@ export default function PaymentsListPage() {
                     </td>
                     <td>{p.customerName}</td>
                     <td>{formatINR(p.amount)}</td>
-                    <td>{METHOD_LABEL[p.method]}</td>
+                    <td>{methodLabel(p.method)}</td>
                     <td style={{ color: "var(--admin-ink-faint)", fontSize: 12.5 }}>{formatWhen(p.at)}</td>
                     <td>
                       <Badge tone={STATUS_TONE[p.status]}>{statusLabel(p.status)}</Badge>
