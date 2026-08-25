@@ -82,7 +82,7 @@ const ship = asyncHandler(async (req, res) => {
   // Bill upload is optional at ship time — the admin can also add or
   // replace it later via POST /:id/bill (uploadBill below).
   if (req.file) {
-    const uploaded = await uploadDocumentBuffer(req.file.buffer, "rns-bills");
+    const uploaded = await uploadDocumentBuffer(req.file.buffer, "rns-bills", req.file.originalname);
     updated.billUrl = uploaded.url;
     updated.billPublicId = uploaded.publicId;
     updated.billUploadedAt = new Date();
@@ -100,7 +100,7 @@ const uploadBill = asyncHandler(async (req, res) => {
   if (!order) throw ApiError.notFound("Order not found.");
   if (!req.file) throw ApiError.badRequest("No bill file was uploaded.");
 
-  const uploaded = await uploadDocumentBuffer(req.file.buffer, "rns-bills");
+  const uploaded = await uploadDocumentBuffer(req.file.buffer, "rns-bills", req.file.originalname);
   const previousPublicId = order.billPublicId;
 
   order.billUrl = uploaded.url;

@@ -1,3 +1,5 @@
+const path = require("path");
+const crypto = require("crypto");
 const cloudinary = require("cloudinary").v2;
 const { env } = require("../config/env");
 const logger = require("../utils/logger");
@@ -52,10 +54,24 @@ async function destroyImage(publicId) {
 // Bills/invoices are PDFs (occasionally a photographed JPEG), not
 // photographs to be resized/optimized — stored as-is via Cloudinary's
 // "raw" resource type rather than the image pipeline above.
-function uploadDocumentBuffer(buffer, folder) {
+//
+// Unlike image/video resources, Cloudinary's "raw" type does NOT append
+// a file extension to the delivery URL on its own — it only uses
+// whatever extension is baked into the public_id we hand it. Without
+// one (the old code passed only `folder`, no public_id), the stored
+// asset has no extension, Cloudinary serves it as
+// `Content-Type: application/octet-stream`, and browsers can neither
+// render it inline nor save it back out as a recognizable .pdf/.jpg —
+// which is exactly the "downloads in the wrong format" / "won't open
+// in a new tab" bug. Passing originalFilename lets us preserve the
+// real extension in the public_id so delivery gets the right
+// Content-Type and inline (not forced-attachment) behavior.
+function uploadDocumentBuffer(buffer, folder, originalFilename) {
   return new Promise((resolve, reject) => {
+    const ext = (originalFilename && path.extname(originalFilename).slice(1).toLowerCase()) || "pdf";
+    const uniqueName = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}.${ext}`;
     const stream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: "raw" },
+      { folder, resource_type: "raw", public_id: uniqueName, use_filename: false, unique_filename: false },
       (err, result) => {
         if (err) return reject(err);
         resolve({ url: result.secure_url, publicId: result.public_id });
