@@ -74,6 +74,14 @@ const reconcile = asyncHandler(async (req, res) => {
     payment.verifiedAt = payment.verifiedAt || new Date();
     await payment.save();
   } else {
+    // Same bug as the one just fixed on the storefront-backend side: this
+    // branch used to only touch razorpayStatus/lastReconciledAt, so a
+    // payment that was already "paid" (the common case — verifyPayment
+    // settles it before the webhook/reconcile ever runs) could never get
+    // its real method backfilled here, even by hitting Reconcile.
+    if (captured && payment.status === "paid" && !payment.method && captured.method) {
+      payment.method = captured.method;
+    }
     payment.razorpayStatus = remoteOrder.status;
     payment.lastReconciledAt = new Date();
     await payment.save();
