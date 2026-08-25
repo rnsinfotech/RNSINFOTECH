@@ -14,6 +14,12 @@ const verifyOtpSchema = z.object({
   // Only used the first time a given email verifies (i.e. account creation);
   // ignored on subsequent logins where the user already has a name.
   name: z.string().trim().min(1).max(100).optional(),
+  // Only sent (and only used) on signup, same as `name` above.
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\d{10}$/, "Enter a valid 10-digit phone number.")
+    .optional(),
   // Which flow the code came from — the Login page vs the Signup page.
   // Defaults to "login" (the safer default: don't silently create an
   // account for someone who only meant to log in). See verifyOtp in

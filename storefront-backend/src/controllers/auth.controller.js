@@ -29,6 +29,20 @@ const requestOtp = asyncHandler(async (req, res) => {
     }
   }
 
+  // Mirror of the login guard above: signing up with an email that
+  // already has an account shouldn't send another OTP either — that
+  // would just let someone "re-signup" into their own existing account.
+  // Point them to the login page instead of sending a code that verify-otp
+  // (intent="signup") would otherwise happily accept and log into an
+  // already-existing account, which is confusing since they came in via
+  // the Signup form expecting a new one.
+  if (intent === "signup") {
+    const existing = await User.findOne({ email });
+    if (existing) {
+      throw ApiError.conflict("An account with this email already exists. Please log in instead.", { code: "ACCOUNT_ALREADY_EXISTS" });
+    }
+  }
+
   // Anti-spam: if there's still a live, unconsumed code for this email,
   // don't let another one be requested until the cooldown passes — the
   // frontend's "resend" button hitting this repeatedly shouldn't flood the
@@ -72,7 +86,7 @@ const requestOtp = asyncHandler(async (req, res) => {
 
 // POST /api/auth/verify-otp
 const verifyOtp = asyncHandler(async (req, res) => {
-  const { email, code, name, intent } = req.body;
+  const { email, code, name, phone, intent } = req.body;
 
   const otp = await Otp.findOne({ email, consumedAt: null }).sort({ createdAt: -1 });
 
@@ -128,7 +142,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
     if (intent === "login") {
       throw ApiError.notFound("No account found for this email. Please sign up first.", { code: "ACCOUNT_NOT_FOUND" });
     }
-    user = await User.create({ email, name: name || "", isVerified: true });
+    user = await User.create({ email, name: name || "", phone: phone || "", isVerified: true });
   } else if (!user.isVerified || (name && !user.name)) {
     user.isVerified = true;
     if (name && !user.name) user.name = name;

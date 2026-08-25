@@ -68,6 +68,7 @@ export function AuthProvider({ children }) {
           expiresInSeconds: response.expiresInSeconds,
           devCode: response.devCode || null,
           name: pendingVerification?.name || "",
+          phone: pendingVerification?.phone || "",
           // Which page this OTP request came from — gates whether
           // verify-otp is allowed to create a new account. Falls back to
           // "login" (the safer default) if unspecified.
@@ -80,7 +81,7 @@ export function AuthProvider({ children }) {
       }
     },
 
-    signup: async ({ name, email }) => {
+    signup: async ({ name, email, phone }) => {
       const result = await api.requestOtp(email, "signup");
       if (!result.ok) return result;
       setPendingVerification((prev) => ({
@@ -89,6 +90,7 @@ export function AuthProvider({ children }) {
         expiresInSeconds: prev?.expiresInSeconds || 600,
         devCode: result.devCode || prev?.devCode || null,
         name: String(name || "").trim(),
+        phone: String(phone || "").trim(),
         intent: "signup",
       }));
       return { ok: true };
@@ -106,6 +108,7 @@ export function AuthProvider({ children }) {
         expiresInSeconds: prev?.expiresInSeconds || 600,
         devCode: result.devCode || prev?.devCode || null,
         name: String(name || "").trim(),
+        phone: String(prev?.phone || "").trim(),
         intent,
       }));
       return { ok: true };
@@ -126,6 +129,7 @@ export function AuthProvider({ children }) {
       // and got rejected with a 400. Only include `name` when there's
       // an actual value.
       const name = String(nameOverride || pendingVerification.name || "").trim();
+      const phone = String(pendingVerification.phone || "").trim();
 
       try {
         const response = await apiRequest("/auth/verify-otp", {
@@ -134,6 +138,7 @@ export function AuthProvider({ children }) {
             email: pendingVerification.email,
             code,
             ...(name ? { name } : {}),
+            ...(phone ? { phone } : {}),
             intent: pendingVerification.intent || "login",
           },
         });
