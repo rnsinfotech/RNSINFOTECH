@@ -3,7 +3,7 @@ import { useEffect } from "react";
 const SITE_NAME = "RNS INFOTECH";
 const DEFAULT_DESCRIPTION =
   "RNS INFOTECH is an authorized dealer of pen tablets, pen displays, and stylus hardware for artists, designers, and creators, with genuine warranty support.";
-const DEFAULT_IMAGE = "/assets/og-default.jpg";
+const DEFAULT_IMAGE = "/rns_logo.jpg";
 
 function setMeta(attr, key, content) {
   if (!content) return;

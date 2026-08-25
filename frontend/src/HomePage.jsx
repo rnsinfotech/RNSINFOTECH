@@ -31,6 +31,7 @@ const ORGANIZATION_JSON_LD = {
   "@type": "Organization",
   name: "RNS INFOTECH",
   url: typeof window !== "undefined" ? window.location.origin : undefined,
+  logo: "https://www.rnsinfotech.co.in/assets/favicon/web-app-manifest-512x512.png",
   description:
     "Authorized dealer of pen tablets, pen displays, and stylus hardware for artists, designers, and creators.",
   sameAs: [],
