@@ -113,6 +113,11 @@ const orderSchema = new mongoose.Schema(
     // it only ever reads them back for the customer's order-tracking UI.
     courierName: { type: String, default: null },
     trackingId: { type: String, default: null },
+    // Admin-uploaded bill/invoice file (replaces the old auto-generated
+    // GST invoice). Read-only here — set by admin-backend when the
+    // order is shipped.
+    billUrl: { type: String, default: null },
+    billUploadedAt: { type: Date, default: null },
     confirmedAt: { type: Date, default: null },
     shippedAt: { type: Date, default: null },
     cancelledAt: { type: Date, default: null },

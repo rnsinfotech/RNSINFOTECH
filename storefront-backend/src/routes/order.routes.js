@@ -14,7 +14,11 @@ router.use(requireAuth);
 
 router.post("/", validate(placeOrderSchema), orderController.placeOrder);
 router.get("/", validate(listMyOrdersQuerySchema, "query"), orderController.listMyOrders);
-router.get("/:id/invoice", validateParam("id"), orderController.getMyInvoice);
+// The old auto-generated GST invoice endpoint has been retired — bills
+// are now uploaded manually by admin (see admin-backend's order.controller
+// ship/uploadBill) and served directly via Order.billUrl on the order
+// object itself, no separate endpoint needed. getMyInvoice/invoice.service.js
+// are left in place, unused, in case this needs to be revisited later.
 router.get("/:id", validateParam("id"), orderController.getMyOrderById);
 
 module.exports = router;

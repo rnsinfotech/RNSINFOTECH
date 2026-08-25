@@ -7,6 +7,7 @@ const { transitionOrder } = require("../services/orderLifecycle.service");
 const { releaseOrderStock, restoreConsumedOrderStock } = require("../services/inventory.service");
 const { releaseCoupon, rollbackConsumedCoupon } = require("../services/coupon.service");
 const { initiateRefund } = require("../services/refund.service");
+const { uploadDocumentBuffer, destroyDocument } = require("../services/upload.service");
 
 const SORT_NEWEST = { createdAt: -1 };
 
@@ -77,8 +78,40 @@ const ship = asyncHandler(async (req, res) => {
   const updated = await transitionOrder(order, "shipped", { actorType: "admin", actorId: req.admin?._id || null, note: `${req.body.courierName} / ${req.body.trackingId}` });
   updated.courierName = req.body.courierName;
   updated.trackingId = req.body.trackingId;
+
+  // Bill upload is optional at ship time — the admin can also add or
+  // replace it later via POST /:id/bill (uploadBill below).
+  if (req.file) {
+    const uploaded = await uploadDocumentBuffer(req.file.buffer, "rns-bills");
+    updated.billUrl = uploaded.url;
+    updated.billPublicId = uploaded.publicId;
+    updated.billUploadedAt = new Date();
+  }
+
   await updated.save();
   res.json({ order: updated });
+});
+
+// POST /:id/bill — upload or replace the bill/invoice file for an order,
+// independent of the ship action above (e.g. the admin forgot it at ship
+// time, or needs to correct/replace a previously uploaded file).
+const uploadBill = asyncHandler(async (req, res) => {
+  const order = await Order.findOne({ _id: req.params.id, ...PAID_ORDER_FILTER });
+  if (!order) throw ApiError.notFound("Order not found.");
+  if (!req.file) throw ApiError.badRequest("No bill file was uploaded.");
+
+  const uploaded = await uploadDocumentBuffer(req.file.buffer, "rns-bills");
+  const previousPublicId = order.billPublicId;
+
+  order.billUrl = uploaded.url;
+  order.billPublicId = uploaded.publicId;
+  order.billUploadedAt = new Date();
+  await order.save();
+
+  // Best-effort cleanup of the replaced file — never blocks the response.
+  if (previousPublicId) destroyDocument(previousPublicId).catch(() => {});
+
+  res.json({ order });
 });
 
 const cancel = asyncHandler(async (req, res) => {
@@ -99,4 +132,4 @@ const cancel = asyncHandler(async (req, res) => {
   res.json({ order: updated });
 });
 
-module.exports = { list, getById, confirm, ship, cancel };
+module.exports = { list, getById, confirm, ship, cancel, uploadBill };

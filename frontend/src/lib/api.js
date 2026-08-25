@@ -264,6 +264,7 @@ export function normalizeOrder(order = {}) {
     status: order.status || "pending",
     trackingId: order.trackingId || null,
     courierName: order.courierName || null,
+    billUrl: order.billUrl || null,
     confirmedAt: order.confirmedAt || null,
     shippedAt: order.shippedAt || null,
     cancelledAt: order.cancelledAt || null,

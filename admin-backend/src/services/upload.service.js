@@ -49,4 +49,29 @@ async function destroyImage(publicId) {
   }
 }
 
-module.exports = { uploadBuffer, destroyImage, PRODUCT_IMAGE_TRANSFORM };
+// Bills/invoices are PDFs (occasionally a photographed JPEG), not
+// photographs to be resized/optimized — stored as-is via Cloudinary's
+// "raw" resource type rather than the image pipeline above.
+function uploadDocumentBuffer(buffer, folder) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder, resource_type: "raw" },
+      (err, result) => {
+        if (err) return reject(err);
+        resolve({ url: result.secure_url, publicId: result.public_id });
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
+async function destroyDocument(publicId) {
+  if (!publicId) return;
+  try {
+    await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+  } catch (err) {
+    logger.warn(`Failed to delete Cloudinary document ${publicId}: ${err.message}`);
+  }
+}
+
+module.exports = { uploadBuffer, destroyImage, uploadDocumentBuffer, destroyDocument, PRODUCT_IMAGE_TRANSFORM };

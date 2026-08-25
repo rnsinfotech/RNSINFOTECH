@@ -95,6 +95,13 @@ const orderSchema = new mongoose.Schema(
     deliveryEstimate: { type: String, default: "3-4 days" },
     courierName: { type: String, default: null },
     trackingId: { type: String, default: null },
+    // Admin-uploaded bill/invoice file (replaces the old auto-generated
+    // GST invoice). Set when the admin uploads a bill, typically at the
+    // same time the order is marked shipped — see order.controller.js's
+    // ship/uploadBill handlers.
+    billUrl: { type: String, default: null },
+    billPublicId: { type: String, default: null },
+    billUploadedAt: { type: Date, default: null },
     confirmedAt: { type: Date, default: null },
     shippedAt: { type: Date, default: null },
     cancelledAt: { type: Date, default: null },

@@ -11,8 +11,21 @@ const COMMON_COURIERS = ["Delhivery", "Blue Dart", "DTDC", "Ekart Logistics", "X
 export default function OrderShipModal({ order, onClose, onSaved }) {
   const [courierName, setCourierName] = useState("");
   const [trackingId, setTrackingId] = useState("");
+  const [billFile, setBillFile] = useState(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0] || null;
+    if (file && file.size > 10 * 1024 * 1024) {
+      setError("Bill file must be under 10MB.");
+      e.target.value = "";
+      setBillFile(null);
+      return;
+    }
+    setError("");
+    setBillFile(file);
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -23,7 +36,7 @@ export default function OrderShipModal({ order, onClose, onSaved }) {
     }
     setSaving(true);
     try {
-      const updated = await shipOrder(order.id, { courierName, trackingId });
+      const updated = await shipOrder(order.id, { courierName, trackingId, billFile });
       onSaved(updated);
     } catch (err) {
       setError(err.message || "Something went wrong.");
@@ -83,6 +96,13 @@ export default function OrderShipModal({ order, onClose, onSaved }) {
                 onChange={(e) => setTrackingId(e.target.value)}
                 placeholder="e.g. BD481923650IN"
               />
+            </FormField>
+
+            <FormField label="Bill / invoice (optional)" htmlFor="ship-bill">
+              <input id="ship-bill" className="admin-input" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={handleFileChange} />
+              <p style={{ fontSize: 11.5, color: "var(--admin-ink-faint)", marginTop: 4 }}>
+                PDF, JPEG, PNG, or WEBP, up to 10MB. The customer sees this file on their order page. You can also add or replace it later from the order detail page.
+              </p>
             </FormField>
           </div>
 

@@ -163,7 +163,7 @@ export const corporateSales = {
     {
       icon: "fileText",
       title: "GST invoicing",
-      body: "Proper GST invoices for every order, so procurement and finance teams don't have to chase paperwork.",
+      body: "A proper bill with every shipped order, so procurement and finance teams don't have to chase paperwork.",
     },
     {
       icon: "headset",

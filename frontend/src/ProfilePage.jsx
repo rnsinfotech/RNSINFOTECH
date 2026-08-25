@@ -14,6 +14,7 @@ import { useOrders } from "./context/OrdersContext";
 import { useCart } from "./context/CartContext";
 
 import { nav, footer } from "./data/siteData";
+
 /**
  * ProfilePage — the Amazon-style account hub: who you are (with an
  * auto-generated avatar, since there's no photo upload here), quick

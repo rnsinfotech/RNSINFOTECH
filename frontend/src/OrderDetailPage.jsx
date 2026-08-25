@@ -8,7 +8,6 @@ import SEO from "./components/SEO";
 import Icon from "./components/Icon";
 import { useOrders, getOrderStatus, getTrackingInfo, canDownloadInvoice } from "./context/OrdersContext";
 
-import { downloadInvoice } from "./lib/invoice";
 import { ErrorState } from "./components/ui/Stateviews";
 
 import { nav, footer } from "./data/siteData";
@@ -149,13 +148,13 @@ export default function OrderDetailPage() {
                 paymentVerifiedAt, so every order reaching this page is
                 already paid; see storefront-backend's listMyOrders. */}
             {canDownloadInvoice(order) ? (
-              <button onClick={() => downloadInvoice(order)} className="rns-btn rns-btn--ghost">
+              <a href={order.billUrl} target="_blank" rel="noreferrer" className="rns-btn rns-btn--ghost">
                 <Icon name="download" size={16} />
-                Download invoice
-              </button>
+                Download bill
+              </a>
             ) : (
               <div
-                title="Available once your order has shipped"
+                title="Available once your order has shipped and the bill is uploaded"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -168,7 +167,7 @@ export default function OrderDetailPage() {
                 }}
               >
                 <Icon name="download" size={15} />
-                Invoice available after your order ships
+                Bill available after your order ships
               </div>
             )}
             {["pending", "confirmed"].includes(order.status) && (

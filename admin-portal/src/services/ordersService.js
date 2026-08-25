@@ -48,6 +48,8 @@ function normalizeOrder(order = {}) {
     customerEmail: order.user?.email || order.customerEmail || "",
     courierName: order.courierName || null,
     trackingId: order.trackingId || null,
+    billUrl: order.billUrl || null,
+    billUploadedAt: order.billUploadedAt || null,
     confirmedAt: order.confirmedAt || null,
     shippedAt: order.shippedAt || null,
     cancelledAt: order.cancelledAt || null,
@@ -93,11 +95,26 @@ export async function confirmOrder(id) {
   return payload?.order ? normalizeOrder(payload.order) : null;
 }
 
-export async function shipOrder(id, { courierName, trackingId }) {
-  const payload = await adminApiRequest(`/orders/${id}/ship`, {
-    method: "POST",
-    body: { courierName, trackingId },
-  });
+export async function shipOrder(id, { courierName, trackingId, billFile }) {
+  let body;
+  if (billFile) {
+    body = new FormData();
+    body.append("courierName", courierName);
+    body.append("trackingId", trackingId);
+    body.append("bill", billFile);
+  } else {
+    body = { courierName, trackingId };
+  }
+  const payload = await adminApiRequest(`/orders/${id}/ship`, { method: "POST", body });
+  return payload?.order ? normalizeOrder(payload.order) : null;
+}
+
+// Upload/replace the bill independently of shipping — e.g. the admin
+// forgot it at ship time, or needs to correct a previously uploaded file.
+export async function uploadOrderBill(id, billFile) {
+  const body = new FormData();
+  body.append("bill", billFile);
+  const payload = await adminApiRequest(`/orders/${id}/bill`, { method: "POST", body });
   return payload?.order ? normalizeOrder(payload.order) : null;
 }
 

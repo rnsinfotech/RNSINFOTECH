@@ -27,8 +27,11 @@ export function getTrackingInfo(order) {
   return { courierName: order.courierName, trackingId: order.trackingId };
 }
 
+// A "Download bill" link only makes sense once the admin has actually
+// uploaded one (see admin-portal's OrderShipModal/OrderDetailPage) — an
+// order being shipped doesn't guarantee a bill exists yet.
 export function canDownloadInvoice(order) {
-  return order.status === "shipped";
+  return order.status === "shipped" && Boolean(order.billUrl);
 }
 
 export function getOrderStatus(order) {

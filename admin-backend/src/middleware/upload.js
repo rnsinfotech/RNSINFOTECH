@@ -28,7 +28,32 @@ function wrap(multerMiddleware) {
   };
 }
 
+const BILL_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+const MAX_BILL_SIZE_BYTES = 10 * 1024 * 1024; // 10MB — plenty for a scanned/printed bill.
+
+const billMulterInstance = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_BILL_SIZE_BYTES, files: 1 },
+  fileFilter(req, file, cb) {
+    if (!BILL_MIME_TYPES.has(file.mimetype)) return cb(new ApiError(400, "Only PDF, JPEG, PNG, or WEBP files are allowed for a bill."));
+    cb(null, true);
+  },
+});
+
+// Bills skip the product-photo validation pipeline above (dimension/
+// decoding checks that don't apply to a PDF) — just the mimetype/size
+// checks multer already did in fileFilter/limits.
+function wrapBillUpload(multerMiddleware) {
+  return function handleUpload(req, res, next) {
+    multerMiddleware(req, res, (err) => {
+      if (err) return next(err instanceof ApiError ? err : ApiError.badRequest(err.message || "Upload failed."));
+      next();
+    });
+  };
+}
+
 module.exports = {
   single: (field) => wrap(multerInstance.single(field)),
   array: (field, maxCount) => wrap(multerInstance.array(field, maxCount)),
+  bill: (field) => wrapBillUpload(billMulterInstance.single(field)),
 };

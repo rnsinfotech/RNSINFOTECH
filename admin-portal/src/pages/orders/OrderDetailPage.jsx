@@ -9,7 +9,7 @@ import useToast from "../../hooks/useToast";
 import OrderShipModal from "./OrderShipModal";
 import PageLoader from "../../components/PageLoader";
 
-import { getOrder, confirmOrder, cancelOrder } from "../../services/ordersService";
+import { getOrder, confirmOrder, cancelOrder, uploadOrderBill } from "../../services/ordersService";
 import { STATUS_TONE, statusLabel } from "../../utils/format";
 
 function formatINR(n) {
@@ -33,6 +33,7 @@ export default function OrderDetailPage() {
   const [shipping, setShipping] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [uploadingBill, setUploadingBill] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -63,6 +64,26 @@ export default function OrderDetailPage() {
     setOrder(updated);
     setShipping(false);
     showToast(`Marked as shipped — customer now sees ${updated.courierName} tracking ${updated.trackingId}`);
+  }
+
+  async function handleBillFileChange(e) {
+    const file = e.target.files?.[0] || null;
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("Bill file must be under 10MB.", "danger");
+      return;
+    }
+    setUploadingBill(true);
+    try {
+      const updated = await uploadOrderBill(order.id, file);
+      setOrder(updated);
+      showToast("Bill uploaded — the customer can now see it on their order page.");
+    } catch (err) {
+      showToast(err.message || "Something went wrong.", "danger");
+    } finally {
+      setUploadingBill(false);
+    }
   }
 
   async function handleCancelConfirmed() {
@@ -176,6 +197,43 @@ export default function OrderDetailPage() {
             <p style={{ marginTop: 14, fontSize: 12.5, color: "var(--admin-ink-faint)" }}>
               Delivery estimate shown to the customer: {order.deliveryEstimate}
             </p>
+          )}
+          {order.status === "shipped" && (
+            <div
+              style={{
+                marginTop: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                fontSize: 13,
+                flexWrap: "wrap",
+              }}
+            >
+              {order.billUrl ? (
+                <>
+                  <Icon name="check" size={15} style={{ color: "var(--admin-success)", flexShrink: 0 }} />
+                  <a href={order.billUrl} target="_blank" rel="noreferrer" style={{ color: "var(--admin-primary)" }}>
+                    View uploaded bill
+                  </a>
+                  <span style={{ color: "var(--admin-ink-faint)", fontSize: 12 }}>
+                    {order.billUploadedAt ? `· uploaded ${formatDateTime(order.billUploadedAt)}` : ""}
+                  </span>
+                </>
+              ) : (
+                <span style={{ color: "var(--admin-ink-faint)" }}>No bill uploaded yet — the customer won't see one until you add it.</span>
+              )}
+              <label className="admin-btn admin-btn--ghost" style={{ cursor: uploadingBill ? "default" : "pointer", opacity: uploadingBill ? 0.6 : 1 }}>
+                <Icon name="upload" size={13} />
+                {uploadingBill ? "Uploading…" : order.billUrl ? "Replace bill" : "Upload bill"}
+                <input
+                  type="file"
+                  accept="application/pdf,image/jpeg,image/png,image/webp"
+                  onChange={handleBillFileChange}
+                  disabled={uploadingBill}
+                  style={{ display: "none" }}
+                />
+              </label>
+            </div>
           )}
         </div>
       )}

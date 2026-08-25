@@ -7,7 +7,6 @@ import Footer from "./components/Footer";
 import SEO from "./components/SEO";
 import Icon from "./components/Icon";
 import { useOrders, getOrderStatus, canDownloadInvoice } from "./context/OrdersContext";
-import { downloadInvoice } from "./lib/invoice";
 
 import { nav, footer } from "./data/siteData";
 import { ErrorState } from "./components/ui/Stateviews";
@@ -210,13 +209,13 @@ export default function OrdersPage() {
                         View order details
                       </Link>
                       {canDownloadInvoice(order) ? (
-                        <button onClick={() => downloadInvoice(order)} className="rns-btn rns-btn--ghost">
+                        <a href={order.billUrl} target="_blank" rel="noreferrer" className="rns-btn rns-btn--ghost">
                           <Icon name="download" size={15} />
-                          Download invoice
-                        </button>
+                          Download bill
+                        </a>
                       ) : (
                         <span
-                          title="Available once your order has shipped"
+                          title="Available once your order has shipped and the bill is uploaded"
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -227,7 +226,7 @@ export default function OrdersPage() {
                           }}
                         >
                           <Icon name="download" size={15} />
-                          Invoice available after shipping
+                          Bill available after shipping
                         </span>
                       )}
                     </div>
