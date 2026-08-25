@@ -24,6 +24,21 @@ async function sitemap(req, res, next) {
 function robots(req, res) {
   const base = siteUrl();
   const sitemapUrl = base ? `${base}/sitemap.xml` : '/sitemap.xml';
+  // This same Express app answers on both the main site's host and the
+  // api.* subdomain. The api subdomain has no browsable HTML pages of its
+  // own to hide from crawlers (login/checkout/admin are all on the
+  // frontend, a different host) — access control there is via auth, not
+  // robots.txt. Blanket-disallowing /api/ made sense for the main site's
+  // robots.txt, but serving that same file on api.* blocked Googlebot from
+  // fetching these endpoints as XHR resources while rendering the
+  // storefront, so pages like the homepage rendered with every
+  // products/categories/FAQs section empty in Search Console.
+  const host = String(req.hostname || '').toLowerCase();
+  const isApiHost = host.startsWith('api.');
+  if (isApiHost) {
+    res.type('text/plain').send(`User-agent: *\nAllow: /\n`);
+    return;
+  }
   res.type('text/plain').send(`User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/\nDisallow: /checkout\nDisallow: /orders\nDisallow: /profile\nDisallow: /login\nDisallow: /signup\nSitemap: ${sitemapUrl}\n`);
 }
 function escapeXml(v) { return String(v).replace(/[<>&'\"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c])); }
