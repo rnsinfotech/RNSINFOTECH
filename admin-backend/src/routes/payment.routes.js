@@ -25,5 +25,14 @@ router.post(
   validate(refundPaymentSchema),
   paymentController.refund
 );
+// The reconcile controller action existed and was already exported, but
+// no route ever pointed at it — the admin portal's "Reconcile" button
+// was hitting a URL that 404'd ("The requested resource was not found").
+router.post(
+  "/:id/reconcile",
+  validateParam("id"),
+  sensitiveRateLimit,
+  paymentController.reconcile
+);
 
 module.exports = router;
