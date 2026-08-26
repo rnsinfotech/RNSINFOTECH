@@ -1,7 +1,7 @@
 const { loadEnvironment } = require("./loadEnv");
 const appEnv = loadEnvironment();
 const required = ["MONGO_URI","CORS_ORIGIN","JWT_ACCESS_SECRET","JWT_REFRESH_SECRET","JWT_ACCESS_TTL","JWT_REFRESH_TTL","OTP_TTL_MINUTES","OTP_RESEND_COOLDOWN_SECONDS","OTP_MAX_ATTEMPTS","OTP_DEBUG_ECHO","PORT","EMAIL_FROM"];
-const requiredInProduction = ["MONGO_URI","JWT_ACCESS_SECRET","JWT_REFRESH_SECRET","RAZORPAY_KEY_ID","RAZORPAY_KEY_SECRET","RAZORPAY_WEBHOOK_SECRET","RESEND_API_KEY","EMAIL_FROM"];
+const requiredInProduction = ["MONGO_URI","JWT_ACCESS_SECRET","JWT_REFRESH_SECRET","CASHFREE_APP_ID","CASHFREE_SECRET_KEY","CASHFREE_ENVIRONMENT","RESEND_API_KEY","EMAIL_FROM"];
 const corsOrigin = (process.env.CORS_ORIGIN || "").split(",").map((x) => x.trim()).filter(Boolean);
 const env = {
   appEnv, exposeErrorStacks: process.env.EXPOSE_ERROR_STACKS === "true", nodeEnv: process.env.NODE_ENV || (appEnv === "production" || appEnv === "staging" ? "production" : appEnv),
@@ -20,9 +20,22 @@ const env = {
   // rateLimit.js, keyed on email only (not IP), since this is an account-
   // level quota rather than an anti-burst-from-one-client control.
   otpDailyLimit: Math.max(1, Number(process.env.OTP_DAILY_LIMIT || 5)),
-  razorpayKeyId: process.env.RAZORPAY_KEY_ID || "", razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || "",
+  // Single source of truth for the payment gateway. Nothing outside this
+  // object may read a CASHFREE_* variable directly, so that sandbox vs
+  // production is decided in exactly one place (see assertEnv below, which
+  // refuses to boot a production process pointed at sandbox credentials).
+  cashfree: {
+    appId: process.env.CASHFREE_APP_ID || "",
+    secretKey: process.env.CASHFREE_SECRET_KEY || "",
+    environment: (process.env.CASHFREE_ENVIRONMENT || "sandbox").toLowerCase(),
+    apiVersion: process.env.CASHFREE_API_VERSION || "2023-08-01",
+    // Where Cashfree sends the customer back after hosted checkout, and
+    // where it POSTs webhooks. Both are our own URLs.
+    returnUrl: process.env.CASHFREE_RETURN_URL || "",
+    notifyUrl: process.env.CASHFREE_NOTIFY_URL || "",
+  },
   emailMaxAttempts: Math.max(1, Number(process.env.EMAIL_MAX_ATTEMPTS || 5)),
-  emailRetryIntervalSeconds: Math.max(10, Number(process.env.EMAIL_RETRY_INTERVAL_SECONDS || 30)), razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || "",
+  emailRetryIntervalSeconds: Math.max(10, Number(process.env.EMAIL_RETRY_INTERVAL_SECONDS || 30)),
   resendApiKey: process.env.RESEND_API_KEY || "", emailFrom: process.env.EMAIL_FROM,
   // Where newsletter/demo/contact/quote form notifications go (see
   // lead.controller.js) - optional, falls back to EMAIL_FROM if unset so
@@ -54,10 +67,20 @@ function assertEnv() {
   if (!Number.isFinite(env.otpResendCooldownSeconds) || env.otpResendCooldownSeconds < 60) throw new Error("OTP_RESEND_COOLDOWN_SECONDS must be at least 60 (1 minute).");
   if (!Number.isFinite(env.otpMaxAttempts) || env.otpMaxAttempts < 1) throw new Error("OTP_MAX_ATTEMPTS must be at least 1.");
   if (!Number.isFinite(env.otpDailyLimit) || env.otpDailyLimit < 1) throw new Error("OTP_DAILY_LIMIT must be at least 1.");
+  if (!["sandbox", "production"].includes(env.cashfree.environment)) {
+    throw new Error('CASHFREE_ENVIRONMENT must be either "sandbox" or "production".');
+  }
   if (env.nodeEnv === "production") {
     const missingProd = requiredInProduction.filter((k) => !process.env[k]);
     if (missingProd.length) throw new Error(`Missing required production environment variables: ${missingProd.join(", ")}`);
     if (env.otpDebugEcho) throw new Error("OTP_DEBUG_ECHO must be false in production.");
+    // A production deployment holding sandbox keys silently takes real
+    // orders that never collect real money, so this is a hard boot failure
+    // rather than a warning.
+    if (env.cashfree.environment !== "production") {
+      throw new Error('CASHFREE_ENVIRONMENT must be "production" when NODE_ENV is production.');
+    }
+    if (!env.cashfree.notifyUrl) throw new Error("CASHFREE_NOTIFY_URL must be set in production so payment webhooks can be delivered.");
   }
 }
 module.exports = { env, assertEnv };

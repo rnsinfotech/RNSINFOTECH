@@ -25,6 +25,15 @@ class ApiError extends Error {
   static conflict(message, opts) {
     return new ApiError(409, message, opts);
   }
+  // Upstream (payment gateway) failures. This existed on the storefront's
+  // ApiError but not here, while admin-backend's refund service already
+  // called it — so the refund failure path threw a TypeError and surfaced as
+  // an opaque 500 instead of a 502 with a usable message. Added rather than
+  // worked around, since a refund that fails is precisely when an operator
+  // needs to know what actually happened.
+  static badGateway(message = "Upstream service error") {
+    return new ApiError(502, message);
+  }
 }
 
 module.exports = ApiError;

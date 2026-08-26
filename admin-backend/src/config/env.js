@@ -7,7 +7,7 @@ const required = [
   "ADMIN_LOGIN_MAX_ATTEMPTS","ADMIN_LOGIN_WINDOW_MINUTES","ADMIN_LOGIN_LOCKOUT_MINUTES",
   "ADMIN_PASSWORD_RESET_TTL_MINUTES","ADMIN_PASSWORD_RESET_URL","EMAIL_FROM",
 ];
-const requiredInProduction = ["MONGO_URI","JWT_ADMIN_SECRET","CLOUDINARY_CLOUD_NAME","CLOUDINARY_API_KEY","CLOUDINARY_API_SECRET","RESEND_API_KEY","EMAIL_FROM","RAZORPAY_KEY_ID","RAZORPAY_KEY_SECRET"];
+const requiredInProduction = ["MONGO_URI","JWT_ADMIN_SECRET","CLOUDINARY_CLOUD_NAME","CLOUDINARY_API_KEY","CLOUDINARY_API_SECRET","RESEND_API_KEY","EMAIL_FROM","CASHFREE_APP_ID","CASHFREE_SECRET_KEY","CASHFREE_ENVIRONMENT"];
 
 const corsOrigin = (process.env.CORS_ORIGIN || "").split(",").map((x) => x.trim()).filter(Boolean);
 const bool = (v) => String(v).toLowerCase() === "true";
@@ -36,7 +36,16 @@ const env = {
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || "",
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || "",
-  razorpayKeyId: process.env.RAZORPAY_KEY_ID || "",
+  // Single source of truth for the payment gateway, mirroring
+  // storefront-backend/src/config/env.js. Nothing outside this object may
+  // read a CASHFREE_* variable directly, so sandbox vs production is decided
+  // in exactly one place per service.
+  cashfree: {
+    appId: process.env.CASHFREE_APP_ID || "",
+    secretKey: process.env.CASHFREE_SECRET_KEY || "",
+    environment: (process.env.CASHFREE_ENVIRONMENT || "sandbox").toLowerCase(),
+    apiVersion: process.env.CASHFREE_API_VERSION || "2023-08-01",
+  },
   rateLimitInTests: process.env.RATE_LIMIT_IN_TESTS === "true",
   generalRateLimit: Math.max(30, Number(process.env.GENERAL_RATE_LIMIT || 300)),
   generalRateWindowMs: Math.max(10_000, Number(process.env.GENERAL_RATE_LIMIT_WINDOW_SECONDS || 60) * 1000),
@@ -44,7 +53,6 @@ const env = {
   authRateWindowMs: Math.max(10_000, Number(process.env.AUTH_RATE_LIMIT_WINDOW_MINUTES || 15) * 60 * 1000),
   sensitiveRateLimit: Math.max(5, Number(process.env.SENSITIVE_RATE_LIMIT || 60)),
   sensitiveRateWindowMs: Math.max(10_000, Number(process.env.SENSITIVE_RATE_LIMIT_WINDOW_MINUTES || 1) * 60 * 1000),
-  razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || "",
   emailMaxAttempts: Math.max(1, Number(process.env.EMAIL_MAX_ATTEMPTS || 5)),
   emailRetryIntervalSeconds: Math.max(10, Number(process.env.EMAIL_RETRY_INTERVAL_SECONDS || 30)),
 };
@@ -58,10 +66,19 @@ function assertEnv() {
   if (!env.adminLoginMaxAttempts || env.adminLoginMaxAttempts < 3) throw new Error("ADMIN_LOGIN_MAX_ATTEMPTS must be at least 3.");
   if (!env.adminLoginWindowMs || env.adminLoginWindowMs <= 0 || !env.adminLoginLockoutMs || env.adminLoginLockoutMs <= 0) throw new Error("Admin login rate-limit durations must be positive.");
   if (!env.adminPasswordResetTtlMinutes || env.adminPasswordResetTtlMinutes < 5) throw new Error("ADMIN_PASSWORD_RESET_TTL_MINUTES must be at least 5.");
+  if (!["sandbox", "production"].includes(env.cashfree.environment)) {
+    throw new Error('CASHFREE_ENVIRONMENT must be either "sandbox" or "production".');
+  }
   if (env.nodeEnv === "production") {
     const missingProd = requiredInProduction.filter((k) => !process.env[k]);
     if (missingProd.length) throw new Error(`Missing required production environment variables: ${missingProd.join(", ")}`);
     if (!env.adminRefreshCookieSecure) throw new Error("ADMIN_REFRESH_COOKIE_SECURE must be true in production.");
+    // An admin console holding sandbox keys would issue refunds that never
+    // move real money while reporting success, so this is a hard boot
+    // failure rather than a warning.
+    if (env.cashfree.environment !== "production") {
+      throw new Error('CASHFREE_ENVIRONMENT must be "production" when NODE_ENV is production.');
+    }
   }
 }
 module.exports = { env, assertEnv };

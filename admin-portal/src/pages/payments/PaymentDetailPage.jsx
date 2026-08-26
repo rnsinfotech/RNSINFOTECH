@@ -44,7 +44,7 @@ export default function PaymentDetailPage() {
     const updated = await refundPayment(id);
     setPayment(updated);
     setConfirmOpen(false);
-    showToast("Refund request sent to Razorpay");
+    showToast("Refund request sent to the payment gateway");
   }
 
   if (loading) {
@@ -81,7 +81,7 @@ export default function PaymentDetailPage() {
         <div style={{ display: "flex", gap: 10 }}>
         {["created", "paid"].includes(payment.status) && (
           <button className="admin-btn admin-btn--ghost" type="button" onClick={async () => {
-            try { setPayment(await reconcilePayment(id)); showToast("Payment reconciled with Razorpay"); }
+            try { setPayment(await reconcilePayment(id)); showToast("Payment reconciled with the payment gateway"); }
             catch (err) { showToast(err.message || "Reconciliation failed.", "danger"); }
           }}>
             Reconcile
@@ -95,7 +95,7 @@ export default function PaymentDetailPage() {
           <div style={{ display: "flex", gap: 10 }}>
             <PermissionBoundary permission="payments.refund"><button className="admin-btn admin-btn--ghost" type="button" onClick={() => setConfirmOpen(true)}>
               <Icon name="refresh" size={14} />
-              Issue Razorpay refund
+              Issue refund
             </button></PermissionBoundary>
           </div>
         )}

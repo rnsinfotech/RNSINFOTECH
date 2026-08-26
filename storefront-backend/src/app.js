@@ -48,16 +48,17 @@ function createApp() {
     })
   );
 
-  // Razorpay's webhook HMAC is computed over the exact raw request bytes
-  // it sent — verifying it against a re-serialized JSON.parse(...) of
-  // those bytes can silently fail (whitespace/key-order differences), the
-  // same class of bug BACKEND_PLAN.md notes was already hit and fixed on
-  // an earlier project's payment integration. So this one route gets
-  // express.raw() instead of express.json(), and is mounted here, BEFORE
-  // the global JSON parser below, and outside routes/index.js's
-  // /api/payments router (which requires a logged-in customer) — Razorpay
-  // calls this directly with no user session at all. See
-  // payment.controller.js's webhook handler for the signature check.
+  // Cashfree's webhook HMAC is computed over the exact raw request bytes
+  // it sent (prefixed with the x-webhook-timestamp header) — verifying it
+  // against a re-serialized JSON.parse(...) of those bytes can silently
+  // fail on whitespace or key-order differences, the same class of bug
+  // BACKEND_PLAN.md notes was already hit and fixed on an earlier
+  // project's payment integration. So this one route gets express.raw()
+  // instead of express.json(), and is mounted here, BEFORE the global JSON
+  // parser below, and outside routes/index.js's /api/payments router
+  // (which requires a logged-in customer) — Cashfree calls this directly
+  // with no user session at all. See payment.controller.js's webhook
+  // handler for the signature and replay-window checks.
   app.post("/api/payments/webhook", express.raw({ type: "application/json", limit: "256kb" }), paymentController.webhook);
 
   app.use(generalRateLimit);

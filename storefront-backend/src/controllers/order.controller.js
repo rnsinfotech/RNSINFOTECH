@@ -228,7 +228,8 @@ const cancelMyOrder = asyncHandler(async (req, res) => {
   );
 
   if (paidPayment) {
-    const { createRazorpayRefund } = require("../services/razorpay.service");
+    const { createCashfreeRefund, REFUND_STATUS } = require("../services/cashfree.service");
+    const { buildRefundId } = require("./payment.controller");
     const claimed = await Payment.findOneAndUpdate(
       { _id: paidPayment._id, status: "paid", refundStatus: { $in: ["none", "failed"] } },
       { $set: { refundStatus: "pending", refundInitiatedAt: new Date(), refundReason: req.body?.reason || "Customer cancellation" } },
@@ -236,16 +237,23 @@ const cancelMyOrder = asyncHandler(async (req, res) => {
     );
     if (!claimed) throw ApiError.conflict("A refund is already being processed for this payment.");
     try {
-      const refund = await createRazorpayRefund({
-        razorpayPaymentId: paidPayment.razorpayPaymentId,
-        amountInRupees: Number(paidPayment.amount) - Number(paidPayment.refundedAmount || 0),
-        notes: { orderId: String(order._id), reason: req.body?.reason || "Customer cancellation" },
+      // Amount is derived server-side from the payment record, never from
+      // the request body — a customer cancelling an order has no say in how
+      // much comes back. The refund id is deterministic, so a retried
+      // cancellation resolves to the same Cashfree refund instead of a
+      // second one.
+      const refundAmount = Number(paidPayment.amount) - Number(paidPayment.refundedAmount || 0);
+      const refund = await createCashfreeRefund({
+        orderId: paidPayment.gatewayOrderId,
+        refundId: buildRefundId(paidPayment, "cancel"),
+        amountInRupees: refundAmount,
+        note: req.body?.reason || "Customer cancellation",
       });
       claimed.status = "refunded";
-      claimed.refundStatus = "pending";
-      claimed.razorpayRefundId = refund.id;
-      claimed.refundedAmount = Number(refund.amount || 0) / 100;
-      claimed.refundedAt = refund.status === "processed" ? new Date() : null;
+      claimed.refundStatus = refund.refund_status === REFUND_STATUS.SUCCESS ? "processed" : "pending";
+      claimed.gatewayRefundId = refund.refund_id || refund.cf_refund_id || null;
+      claimed.refundedAmount = Number(refund.refund_amount || 0);
+      claimed.refundedAt = refund.refund_status === REFUND_STATUS.SUCCESS ? new Date() : null;
       await claimed.save();
     } catch (err) {
       await Payment.updateOne({ _id: paidPayment._id }, { $set: { refundStatus: "failed", failureReason: err.message } });

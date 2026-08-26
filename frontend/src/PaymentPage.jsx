@@ -4,21 +4,27 @@ import { useLocation, useNavigate, Link } from "react-router-dom";
 import Icon from "./components/Icon";
 import { useAuth } from "./context/AuthContext";
 import { useOrders } from "./context/OrdersContext";
-import { createPaymentOrder, loadRazorpayCheckout, verifyPayment } from "./lib/razorpay";
+import { createPaymentOrder, loadCashfreeCheckout, verifyPayment } from "./lib/cashfree";
 
 function formatINR(n) {
   return "₹" + Number(n || 0).toLocaleString("en-IN");
 }
 
 /**
- * PaymentPage — starts a real Razorpay payment attempt against an
+ * PaymentPage — starts a real Cashfree payment attempt against an
  * already-placed Order (see CheckoutPage: the order is created first,
  * this page never creates one). Flow: POST /payments/create-order for a
- * Razorpay order id, open Razorpay Checkout with it, then POST
- * /payments/verify with whatever Checkout's success handler returns.
+ * payment session id, open Cashfree Checkout with it, then POST
+ * /payments/verify to have the SERVER go and confirm what happened.
  * The order itself was already created — a cancelled or failed
  * Checkout attempt just leaves it unpaid, retryable from here or from
  * the order's own page ("Pay now").
+ *
+ * Nothing on this page decides whether a payment succeeded. Cashfree hands
+ * the browser no signed success payload, so the client's only job is to
+ * say "checkout closed, go look" — and even if it never does (tab closed,
+ * connection dropped mid-redirect), the Cashfree webhook settles the order
+ * server-side anyway.
  */
 export default function PaymentPage() {
   const location = useLocation();
@@ -29,13 +35,14 @@ export default function PaymentPage() {
   const orderId = location.state?.orderId;
   const order = orderId ? getOrder(orderId) : null;
 
-  const [stage, setStage] = useState("form"); // form | processing | success | error
+  const [stage, setStage] = useState("form"); // form | processing | success | pending | error
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    // Preload Checkout.js as soon as this page mounts so clicking "Pay"
-    // doesn't have to wait on the script fetch too.
-    loadRazorpayCheckout().catch(() => {
+    // Preload the Checkout SDK as soon as this page mounts so clicking "Pay"
+    // doesn't have to wait on the script fetch too. The real mode comes from
+    // the server on create-order; this preload only warms the script cache.
+    loadCashfreeCheckout("sandbox").catch(() => {
       // Swallow here — handlePay surfaces a clear error if it's still
       // unavailable by the time the person actually clicks Pay.
     });
@@ -74,56 +81,70 @@ export default function PaymentPage() {
     setStage("processing");
 
     try {
-      const RazorpayCtor = await loadRazorpayCheckout();
-      const { razorpayOrderId, amount, currency, keyId } = await createPaymentOrder(order.id);
-      const expectedPaise = Math.round(Number(order.total || 0) * 100);
-      if (Number(amount) !== expectedPaise || currency !== "INR") {
-        throw new Error("The payment amount does not match the server-calculated order total. Please retry.");
+      // The server decides the amount, the currency and the environment.
+      // Everything below is display or transport.
+      const { paymentSessionId, gatewayOrderId, amount, currency, mode } = await createPaymentOrder(order.id);
+      if (!paymentSessionId) {
+        throw new Error("Could not start the payment. Please try again.");
+      }
+      // Sanity check only — a mismatch here means the local order view is
+      // stale, so send the person back to reload rather than charging them
+      // an amount the page never showed. The server has already validated
+      // this against stored order state; this is not the security boundary.
+      if (Number(amount) !== Number(order.total) || currency !== "INR") {
+        throw new Error("The payment amount does not match your order total. Please refresh and try again.");
       }
 
-      const checkout = new RazorpayCtor({
-        key: keyId,
-        amount,
-        currency,
-        order_id: razorpayOrderId,
-        name: "RNS INFOTECH",
-        description: `Order ${order.id}`,
-        prefill: {
-          name: currentUser?.name || order.shippingAddress?.name || "",
-          email: currentUser?.email || "",
-          contact: order.shippingAddress?.phone || "",
-        },
-        theme: { color: "#0d1017" },
-        handler: async (response) => {
-          try {
-            await verifyPayment({
-              razorpayOrderId: response.razorpay_order_id,
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySignature: response.razorpay_signature,
-            });
-            await refreshOrders();
-            setStage("success");
-            window.setTimeout(() => {
-              navigate(`/orders/${order.id}`, { state: { justPlaced: true } });
-            }, 1100);
-          } catch (err) {
-            setErrorMessage(err.message || "We couldn't confirm that payment. If money was deducted, it will be refunded — contact support with your order ID.");
-            setStage("error");
-          }
-        },
-        modal: {
-          // Checkout was closed without paying — the order stays
-          // pending/unpaid exactly as it was; let the person try again.
-          ondismiss: () => setStage("form"),
-        },
+      const cashfree = await loadCashfreeCheckout(mode || "sandbox");
+
+      const result = await cashfree.checkout({
+        paymentSessionId,
+        redirectTarget: "_modal",
       });
 
-      checkout.on("payment.failed", (resp) => {
-        setErrorMessage(resp?.error?.description || "Payment failed. You can try again.");
+      // The SDK reports how the modal closed. None of these outcomes is
+      // trusted as a verdict on the payment — each one just decides whether
+      // it is worth asking the server to look.
+      if (result?.error) {
+        setErrorMessage(result.error.message || "Payment failed. You can try again.");
         setStage("error");
-      });
+        return;
+      }
 
-      checkout.open();
+      // Modal dismissed without completing: the order stays pending and
+      // unpaid exactly as it was, so let the person retry.
+      if (!result?.paymentDetails) {
+        setStage("form");
+        return;
+      }
+
+      try {
+        const outcome = await verifyPayment({ gatewayOrderId });
+        // The server answers 202 with status "pending" when Cashfree has not
+        // resolved the payment yet (a bank page still open, a UPI mandate not
+        // yet approved). That is a 2xx, so it would otherwise sail through as
+        // success and tell the customer their order is placed when no money
+        // has moved. Surface it honestly and let the webhook settle it.
+        if (outcome?.status === "pending") {
+          await refreshOrders();
+          setStage("pending");
+          return;
+        }
+        await refreshOrders();
+        setStage("success");
+        window.setTimeout(() => {
+          navigate(`/orders/${order.id}`, { state: { justPlaced: true } });
+        }, 1100);
+      } catch (err) {
+        // Verification failing is not the same as payment failing — the
+        // webhook may still settle this. Say so rather than implying the
+        // money is gone.
+        setErrorMessage(
+          err.message
+          || "We couldn't confirm that payment yet. If money was deducted it will be reconciled automatically — check your order history in a few minutes."
+        );
+        setStage("error");
+      }
     } catch (err) {
       setErrorMessage(err.message || "Could not start the payment. Please try again.");
       setStage("error");
@@ -181,7 +202,7 @@ export default function PaymentPage() {
             {formatINR(order.total)}
           </div>
           <div style={{ fontSize: 11.5, color: "var(--rns-ink-faint)", marginTop: 4 }}>
-            Order {order.id} · Powered by Razorpay
+            Order {order.id} · Powered by Cashfree
           </div>
         </div>
 
@@ -204,7 +225,7 @@ export default function PaymentPage() {
             )}
 
             <p style={{ fontSize: 13, color: "var(--rns-ink-soft)", marginBottom: 18 }}>
-              You'll pick UPI, card, or netbanking on the next screen — Razorpay's own checkout
+              You'll pick UPI, card, or netbanking on the next screen — Cashfree's own checkout
               handles collecting payment details securely.
             </p>
 
@@ -225,6 +246,24 @@ export default function PaymentPage() {
             <div style={{ marginTop: 18, fontSize: 13.5, color: "var(--rns-ink-soft)" }}>
               Opening secure checkout…
             </div>
+          </div>
+        )}
+
+        {stage === "pending" && (
+          <div style={{ padding: "40px 22px", textAlign: "center" }}>
+            <div className="rns-pay-spinner" />
+            <div style={{ marginTop: 18, fontSize: 14.5, fontWeight: 600 }}>Confirming your payment</div>
+            <div style={{ marginTop: 8, fontSize: 12.5, color: "var(--rns-ink-soft)", lineHeight: 1.5 }}>
+              Your bank hasn't finished confirming this yet. You don't need to pay again — we'll
+              update your order automatically as soon as it clears.
+            </div>
+            <Link
+              to={`/orders/${order.id}`}
+              className="rns-btn rns-btn--ghost"
+              style={{ marginTop: 18, display: "inline-flex" }}
+            >
+              View order status
+            </Link>
           </div>
         )}
 

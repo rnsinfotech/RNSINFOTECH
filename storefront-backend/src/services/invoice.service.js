@@ -141,8 +141,9 @@ async function buildInvoiceData(order, user, payment, profile) {
     payment: {
       status: payment?.status || "unpaid",
       method: payment?.method || "",
-      razorpayOrderId: payment?.razorpayOrderId || "",
-      razorpayPaymentId: payment?.razorpayPaymentId || "",
+      gateway: payment?.gateway || "cashfree",
+      gatewayOrderId: payment?.gatewayOrderId || "",
+      gatewayPaymentId: payment?.gatewayPaymentId || "",
       paidAt: payment?.verifiedAt || payment?.createdAt || null,
       amount: Number(payment?.amount || 0),
     },

@@ -14,7 +14,7 @@ const leadRoutes = require("./lead.routes");
 
 // Every future phase adds one line here (e.g. `router.use("/products",
 // productRoutes)`) instead of mounting routes directly in server.js, so
-// server.js stays a pure bootstrap file. Exception: the Razorpay webhook,
+// server.js stays a pure bootstrap file. Exception: the payment webhook,
 // which is mounted directly in app.js — see payment.routes.js.
 const router = Router();
 
