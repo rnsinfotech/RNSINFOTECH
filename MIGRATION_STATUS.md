@@ -5,54 +5,71 @@
 ### Phase 1 — Remove Razorpay Completely
 **STATUS: COMPLETE**
 
-Removed all dead Razorpay runtime/test code:
+Removed all dead Razorpay runtime/test implementation files and confirmed they
+are absent from the final repository:
 - `frontend/src/lib/razorpay.js`
 - `storefront-backend/src/services/razorpay.service.js`
 - `storefront-backend/tests/razorpay.service.test.js`
 - `admin-backend/src/services/razorpay.service.js`
 - `admin-backend/tests/phase8_9_refund.test.js`
 
-The only remaining `razorpay` strings are inside
-`storefront-backend/scripts/migrateLegacyGatewayPayments.js`. That file is a
-one-time historical-data migration utility which converts legacy Razorpay-era
-field names into gateway-neutral fields and archives the historical values.
-It is not imported by runtime payment code and must remain available if old
-records ever need migration.
+No Razorpay dependencies, routes, runtime imports, or environment variables
+remain in the active application code.
 
-There are no Razorpay routes, dependencies, frontend imports, runtime
-services, or Razorpay environment variables.
+A repository-wide case-insensitive Razorpay search was executed after cleanup.
+The only remaining Razorpay references are intentionally confined to:
+`storefront-backend/scripts/migrateLegacyGatewayPayments.js`.
+
+That script is retained because it is required only for historical-data
+migration. It maps legacy Razorpay-era field names to gateway-neutral fields,
+archives the legacy provider metadata, and is not imported by active payment
+runtime code.
 
 ### Phase 2 — Cashfree Correctness & Security Hardening
 **STATUS: COMPLETE**
 
-Implemented and verified in source:
-- Cashfree API version default upgraded to `2025-01-01`.
+Implemented and source-audited:
+- Cashfree Payment Gateway API version set to `2025-01-01`.
 - Server-side Cashfree credentials only.
-- Cashfree `x-request-id` generated for every API request.
-- Deterministic UUID `x-idempotency-key` added to order creation.
-- Deterministic UUID `x-idempotency-key` added to refund creation.
+- Cashfree `x-request-id` generated for API requests.
+- `x-idempotency-key` added to order creation.
+- `x-idempotency-key` added to refund creation.
 - Webhook signature verified over `timestamp + rawBody` using HMAC-SHA256/Base64.
-- Webhook timestamp handled as Cashfree's current Unix epoch milliseconds.
+- Cashfree webhook timestamp handled as Unix epoch milliseconds.
 - Five-minute webhook freshness/replay window enforced.
 - `x-webhook-version` required and pinned to `2025-01-01`.
-- Raw webhook bytes preserved with `express.raw()` before JSON parsing.
+- Raw webhook bytes preserved before JSON parsing.
 - Constant-time signature comparison retained.
 - Durable webhook idempotency retained with a unique database key.
 - Failed webhook processing remains reclaimable so Cashfree retries can recover.
 - Payment amount/currency checks remain server-side before settlement.
 - Refund amount/state/concurrency checks remain server-side.
-- Historical gateway records cannot be accidentally routed to Cashfree refunds.
-- Gateway error objects are sanitized so credentials/request headers are not attached to thrown errors.
-- Production boot validation prevents production from using sandbox Cashfree configuration.
-- Cashfree payment status enums updated to include current `FLAGGED` and `CANCELLED` states.
+- Historical gateway records cannot be routed into the active Cashfree refund flow.
+- Gateway error objects are sanitized so credentials/request headers are not
+  attached to thrown errors.
+- Production boot validation prevents production from using sandbox Cashfree
+  configuration.
+- Cashfree payment status handling includes the current `FLAGGED` and
+  `CANCELLED` states used by this application.
 
-These controls are aligned with Cashfree's current Payment Gateway API and
-webhook security documentation.
+The API version was independently verified against Cashfree's official current
+Payment Gateway API documentation. Cashfree identifies `2025-01-01` (v5) as
+the latest Payment Gateway API version and lists `2023-08-01` as a previous
+version:
+https://www.cashfree.com/docs/api-reference/payments/latest/overview
+
+Cashfree's official authentication documentation also shows
+`x-api-version: 2025-01-01` for the current API:
+https://www.cashfree.com/docs/api-reference/authentication
+
+Cashfree's official webhook documentation confirms the `2025-01-01` webhook
+version and the raw-body signature requirement:
+https://www.cashfree.com/docs/api-reference/payments/latest/payments/webhooks
 
 ### Phase 3 — Full Test & Sandbox Validation
-**STATUS: AUTOMATED TEST COVERAGE COMPLETE; LIVE SANDBOX EXECUTION BLOCKED IN THIS ENVIRONMENT**
+**STATUS: NOT COMPLETE — AUTOMATED TESTS NOT EXECUTED; LIVE SANDBOX NOT EXECUTED**
 
-Added/updated coverage for:
+Test coverage exists in the repository for:
 - API version header
 - request-id header
 - order idempotency key
@@ -69,46 +86,73 @@ Added/updated coverage for:
 - payment settlement concurrency
 - refund concurrency and reconciliation paths
 
-All JavaScript source files pass `node --check` syntax validation.
+Actual validation performed for this final ZIP:
+- `node --check` was executed against every JavaScript source file in the
+  repository: **PASSED** (`node-check-exit=0`).
+- Repository-wide Razorpay search: **PASSED** — only the intentional
+  historical migration script contains Razorpay references.
+- Cashfree configuration audit: **PASSED** — active configuration defaults and
+  sanitized examples use `2025-01-01`; no `2023-08-01` active configuration
+  remains.
+- Jest suites: **NOT EXECUTED**. Dependency installation was attempted but the
+  environment timed out, and the Jest binary was therefore unavailable.
+- Vitest frontend suite: **NOT EXECUTED**.
+- Real Cashfree sandbox checkout/refund cycle: **NOT EXECUTED**.
 
-A live Cashfree sandbox API call was attempted against the configured
-sandbox endpoint, but this execution environment could not establish the
-external network connection before timeout. Therefore no real sandbox
-transaction is claimed as passed. No production/live payment call was made.
-
-Before production, run the application's Jest suites and perform one complete
-sandbox checkout/refund cycle from the deployed environment where the
-Cashfree sandbox credentials and outbound network are available.
+No automated test or live sandbox result is claimed as passed unless it was
+actually executed in this environment.
 
 ### Phase 4 — Production Readiness Audit
-**STATUS: COMPLETE — SUBJECT TO LIVE SANDBOX CHECK ABOVE**
+**STATUS: NOT COMPLETE — FINAL LIVE VALIDATION GATE REMAINS**
 
-Verified:
-- No Razorpay runtime code remains.
+Repository-level checks completed:
+- No Razorpay runtime implementation remains.
 - Cashfree secrets are server-side only.
 - Sanitized `.env.example` files are provided.
-- `.env` and environment variants are ignored by Git.
-- The final distributable excludes `.env` files and `.git` history.
-- Frontend receives only Cashfree's payment session capability and never the
+- No `.env` files are present in the distributable.
+- No `.git` history is present in the distributable.
+- No production/private credentials are included in the distributable.
+- Frontend receives only the Cashfree payment-session capability and never the
   Cashfree client secret.
 - Payment creation/verification/refund endpoints remain authenticated and
   ownership/role constrained.
 - Webhook endpoint is intentionally unauthenticated but cryptographically
-  authenticated by Cashfree's signature/version/timestamp checks.
+  authenticated by Cashfree signature/version/timestamp checks.
 - Production environment cannot boot with sandbox Cashfree configuration.
 - Historical provider data remains isolated from the active Cashfree flow.
 
+The production-readiness phase cannot honestly be marked complete until the
+application is exercised from a networked deployment/test environment using
+valid Cashfree sandbox credentials and the complete payment lifecycle is
+observed end-to-end.
+
 ## Final go-live gate
 
-**Code migration:** READY
+**Phase 1 — COMPLETE**
 
-**Security hardening:** READY
+**Phase 2 — COMPLETE**
 
-**Automated validation:** READY
+**Phase 3 — NOT COMPLETE**
 
-**Real Cashfree sandbox transaction:** MUST STILL BE RUN from a networked
-runtime with valid Cashfree sandbox credentials.
+**Phase 4 — NOT COMPLETE**
+
+**Code migration:** READY FOR TESTING
+
+**Security hardening:** READY FOR TESTING
+
+**Syntax validation:** PASSED
+
+**Repository Razorpay audit:** PASSED
+
+**Cashfree configuration audit:** PASSED
+
+**Automated Jest/Vitest execution:** STILL REQUIRED
+
+**Real Cashfree sandbox checkout:** STILL REQUIRED
+
+**Sandbox webhook → server verification → settlement → refund cycle:** STILL
+REQUIRED
 
 **Production launch:** Do not switch `CASHFREE_ENVIRONMENT=production` until
-that sandbox checkout + webhook + verification + refund cycle has been
-successfully completed and observed end-to-end.
+the automated test suites and the complete Cashfree sandbox payment/refund
+cycle have been successfully executed and observed from a networked runtime.
