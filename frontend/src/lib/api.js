@@ -219,7 +219,7 @@ export function normalizeOrder(order = {}) {
   const shipping = order.shippingAddress || {};
   // order.itemsTotal is the real payable amount from order.controller.js —
   // as of Phase BC (Coupons) it's already net of any applied discount, and
-  // is exactly what PaymentPage charges via Razorpay. order.discount is
+  // is exactly what PaymentPage charges via Cashfree. order.discount is
   // just the amount that was subtracted, kept for display/invoice only;
   // `subtotal` below is reconstructed (itemsTotal + discount) so the
   // pre-discount line item total still shows correctly even though the

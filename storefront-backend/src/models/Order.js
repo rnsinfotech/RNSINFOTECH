@@ -9,8 +9,8 @@ const mongoose = require("mongoose");
 //   Written ONLY by storefront-backend, at creation, never touched again:
 //     user, items, itemsTotal, shippingAddress, couponCode, discount
 //
-//   `itemsTotal` is the actual payable/charged amount (what Razorpay is
-//   asked for and what admin-backend's revenue aggregates sum) — as of
+//   `itemsTotal` is the actual payable/charged amount (what the payment
+//   gateway is asked for and what admin-backend's revenue aggregates sum) — as of
 //   Phase BC it already has any coupon discount folded in, NOT a raw
 //   Σ price × quantity. `discount` is only the amount that was subtracted
 //   at placement time, kept alongside `couponCode` purely so an order can
@@ -98,8 +98,8 @@ const orderSchema = new mongoose.Schema(
     couponReservationId: { type: mongoose.Schema.Types.ObjectId, default: null, index: true },
     status: { type: String, enum: ORDER_STATUSES, default: "pending", index: true },
     // Set exactly once, by payment.controller.js's settlePaidPayment, the
-    // moment Razorpay payment is verified (client-callback signature check
-    // OR the webhook — whichever settles first). This is the single gate
+    // moment the payment is verified against Cashfree (the customer-return
+    // verification OR the webhook — whichever settles first). This is the single gate
     // that decides whether a customer's order is visible in "My Orders" /
     // whether admin-backend's dashboard counts it as a successful sale.
     // Never set anywhere else, never unset.

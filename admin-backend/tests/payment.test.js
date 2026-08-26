@@ -5,7 +5,7 @@ jest.mock("../src/models/Payment");
 jest.mock("../src/services/inventory.service");
 jest.mock("../src/services/coupon.service");
 jest.mock("../src/services/refund.service");
-jest.mock("../src/services/razorpay.service");
+jest.mock("../src/services/cashfree.service");
 jest.mock("../src/models/Order");
 
 const createApp = require("../src/app");
@@ -33,7 +33,7 @@ beforeEach(() => {
     payment.refundStatus = "processed";
     payment.refundReason = options.reason || null;
     payment.refundedAmount = payment.amount;
-    payment.razorpayRefundId = "rfnd_test";
+    payment.gatewayRefundId = "rfnd_test";
     payment.refundedAt = new Date();
     if (payment.save) await payment.save();
     return payment;
@@ -94,7 +94,7 @@ describe("POST /api/payments/:id/refund", () => {
 
   it("rejects a refund amount greater than the original payment", async () => {
     AdminUser.findById.mockResolvedValue({ _id: "admin123", isActive: true, role: "Owner" });
-    Payment.findById.mockResolvedValue({ _id: "pay1", status: "paid", amount: 3499, razorpayPaymentId: "pay_rp", refundStatus: "none", save: jest.fn() });
+    Payment.findById.mockResolvedValue({ _id: "pay1", status: "paid", amount: 3499, gatewayOrderId: "rns_507f1f77bcf86cd799439011_a1b2c3d4", refundStatus: "none", save: jest.fn() });
     Order.findById.mockResolvedValue({ _id: "o1", status: "cancelled" });
 
     const res = await request(app)
@@ -109,7 +109,7 @@ describe("POST /api/payments/:id/refund", () => {
   // PROGRESS_ORDER_SIMPLIFICATION.md's Phase 1 simplification.
   it("rejects refunding a payment whose order isn't cancelled", async () => {
     AdminUser.findById.mockResolvedValue({ _id: "admin123", isActive: true, role: "Owner" });
-    Payment.findById.mockResolvedValue({ _id: "pay1", status: "paid", amount: 3499, razorpayPaymentId: "pay_rp", refundStatus: "none", order: "o1", save: jest.fn() });
+    Payment.findById.mockResolvedValue({ _id: "pay1", status: "paid", amount: 3499, gatewayOrderId: "rns_507f1f77bcf86cd799439011_a1b2c3d4", refundStatus: "none", order: "o1", save: jest.fn() });
     Order.findById.mockResolvedValue({ _id: "o1", status: "shipped" });
 
     const res = await request(app).post("/api/payments/pay1/refund").set("Authorization", ownerAuthHeader).send({});
@@ -121,7 +121,7 @@ describe("POST /api/payments/:id/refund", () => {
   it("refunds the full amount by default and marks the payment refunded", async () => {
     AdminUser.findById.mockResolvedValue({ _id: "admin123", isActive: true, role: "Owner" });
     const save = jest.fn().mockResolvedValue(true);
-    const payment = { _id: "pay1", status: "paid", amount: 3499, razorpayPaymentId: "pay_rp", refundStatus: "none", order: "o1", save };
+    const payment = { _id: "pay1", status: "paid", amount: 3499, gatewayOrderId: "rns_507f1f77bcf86cd799439011_a1b2c3d4", refundStatus: "none", order: "o1", save };
     Payment.findById.mockResolvedValue(payment);
     Order.findById.mockResolvedValue({ _id: "o1", status: "cancelled" });
 
@@ -135,7 +135,7 @@ describe("POST /api/payments/:id/refund", () => {
     expect(payment.refundedAmount).toBe(3499);
     expect(payment.refundReason).toBe("Customer returned the item");
     expect(payment.refundedAt).toBeInstanceOf(Date);
-    expect(payment.razorpayRefundId).toBe("rfnd_test");
+    expect(payment.gatewayRefundId).toBe("rfnd_test");
     expect(save).toHaveBeenCalled();
   });
 

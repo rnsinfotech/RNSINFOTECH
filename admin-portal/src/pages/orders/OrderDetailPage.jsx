@@ -325,7 +325,7 @@ export default function OrderDetailPage() {
             <div className="admin-kv-list">
               <div>
                 <span>Method</span>
-                <span>Razorpay (online)</span>
+                <span>Online (Cashfree)</span>
               </div>
               <div>
                 <span>Status</span>

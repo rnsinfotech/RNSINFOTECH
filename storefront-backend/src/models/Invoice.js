@@ -61,8 +61,12 @@ const invoiceSchema = new mongoose.Schema({
   payment: {
     status: { type: String, default: "unpaid" },
     method: { type: String, default: "" },
-    razorpayOrderId: { type: String, default: "" },
-    razorpayPaymentId: { type: String, default: "" },
+    // Gateway-neutral so an invoice never has to be reissued because the
+    // processor changed. `gateway` names which one handled it, which is what
+    // an accountant reconciling a settlement report actually needs.
+    gateway: { type: String, default: "" },
+    gatewayOrderId: { type: String, default: "" },
+    gatewayPaymentId: { type: String, default: "" },
     paidAt: { type: Date, default: null },
     amount: { type: Number, default: 0, min: 0 },
   },

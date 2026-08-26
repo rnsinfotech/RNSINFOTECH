@@ -34,7 +34,7 @@ function formatINR(n) {
  *     ProfilePage), with an inline "add new address" fallback.
  *   - Delivery is not a customer choice: every order ships standard,
  *     3-4 days, shown as a fixed line rather than a picker.
- *   - Payment is online-only (Razorpay) — no cash on delivery, no "pay
+ *   - Payment is online-only (Cashfree) — no cash on delivery, no "pay
  *     later" at checkout. The order is only created here as a
  *     reserved/pending record so stock can be held; it is not
  *     considered placed until PaymentPage confirms the payment.
@@ -182,7 +182,7 @@ export default function CheckoutPage() {
 
   // Places the real Order via POST /api/orders. The backend independently
   // re-prices products, coupon, shipping, delivery and tax before creating
-  // the order. For online payment, PaymentPage then starts Razorpay against
+  // the order. For online payment, PaymentPage then starts Cashfree against
   // that persisted server-calculated final amount.
   async function handleConfirm() {
     if (!selectedAddress) {
@@ -219,7 +219,7 @@ export default function CheckoutPage() {
 
       // Online payment only — the order record just created is a
       // reservation, not a placed order. It's only actually placed once
-      // PaymentPage confirms the Razorpay payment.
+      // PaymentPage confirms the Cashfree payment.
       navigate("/checkout/payment", { state: { orderId: order.id, mode } });
     } catch (err) {
       setFormError(err.message || "Something went wrong placing your order. Please try again.");
@@ -373,7 +373,7 @@ export default function CheckoutPage() {
                 <div>
                   <div style={{ fontSize: 13.5, fontWeight: 500 }}>Pay online</div>
                   <div style={{ fontSize: 12, color: "var(--rns-ink-faint)", marginTop: 2 }}>
-                    UPI, cards, and net banking via Razorpay. Cash on delivery isn't available — your
+                    UPI, cards, and net banking via Cashfree. Cash on delivery isn't available — your
                     order is placed only once payment is confirmed.
                   </div>
                 </div>

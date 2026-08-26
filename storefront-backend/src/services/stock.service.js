@@ -167,7 +167,7 @@ async function expireReservations() {
         const Payment = require("../models/Payment");
         await Payment.updateMany(
           { order: order._id, status: "created" },
-          { $set: { status: "expired", failureReason: "Payment timeout / inventory reservation expired", razorpayStatus: "expired" } }
+          { $set: { status: "expired", failureReason: "Payment timeout / inventory reservation expired", gatewayStatus: "EXPIRED" } }
         );
       } catch (_) {}
       try {

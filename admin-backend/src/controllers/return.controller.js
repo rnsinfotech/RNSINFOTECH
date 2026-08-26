@@ -73,7 +73,7 @@ const refund=asyncHandler(async(req,res)=>{
     if(order.status!=="refunded") await transitionOrder(order,"refunded",{actorType:"admin",actorId:req.admin?._id||null,note:"Return refund processed"});
   }
   const user=await getCustomerEmail(rr.user);
-  await sendTransactionalEmail("refund",user.email,{orderId:order._id,amount, status:refund.refundStatus,refundId:refund.razorpayRefundId},`refund:return:${rr._id}:${refund.razorpayRefundId||"pending"}`);
+  await sendTransactionalEmail("refund",user.email,{orderId:order._id,amount, status:refund.refundStatus,refundId:refund.gatewayRefundId},`refund:return:${rr._id}:${refund.gatewayRefundId||"pending"}`);
   res.json({returnRequest:updated,payment:refund});
 });
 module.exports={list,getById,approve,reject,schedulePickup,receive,replacement,complete,refund};

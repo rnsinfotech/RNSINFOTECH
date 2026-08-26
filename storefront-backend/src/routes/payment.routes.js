@@ -9,10 +9,10 @@ const validateParam = require("../middleware/validateParam");
 
 const router = Router();
 
-// The webhook route is NOT here — Razorpay needs raw-body access for its
-// HMAC check, and calls it with no user session at all, so it's mounted
-// directly in app.js at /api/payments/webhook, ahead of the global JSON
-// parser and outside this requireAuth block. See app.js and
+// The webhook route is NOT here — Cashfree signs the exact raw bytes it
+// sent, and calls the endpoint with no user session at all, so it's
+// mounted directly in app.js at /api/payments/webhook, ahead of the global
+// JSON parser and outside this requireAuth block. See app.js and
 // payment.controller.js's webhook handler for why.
 router.use(requireAuth);
 

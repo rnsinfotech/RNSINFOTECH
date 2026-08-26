@@ -88,7 +88,7 @@ const orderSchema = new mongoose.Schema(
     couponReservationId: { type: mongoose.Schema.Types.ObjectId, default: null, index: true },
     status: { type: String, enum: ORDER_STATUSES, default: "pending", index: true },
     // Set exactly once by storefront-backend's payment.controller.js the
-    // moment Razorpay payment is verified. Dashboard revenue/growth
+    // moment the payment is verified against Cashfree. Dashboard revenue/growth
     // aggregates below must always filter on this, not just on `status`,
     // per the "only successful orders count as sales" requirement.
     paymentVerifiedAt: { type: Date, default: null, index: true },
