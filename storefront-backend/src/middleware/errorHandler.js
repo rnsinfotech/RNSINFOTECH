@@ -27,6 +27,7 @@ function errorHandler(err, req, res, next) {
     statusCode = 409;
     message = "A record with that value already exists.";
     details = undefined;
+    logger.warn(`Duplicate key on ${req.method} ${req.originalUrl}: ${JSON.stringify(err.keyValue || err.keyPattern || {})}`);
   } else if (err.type === "entity.too.large" || err.status === 413) {
     statusCode = 413;
     message = "Request payload is too large.";

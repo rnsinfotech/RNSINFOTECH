@@ -370,7 +370,7 @@ const createPaymentOrder = asyncHandler(async (req, res) => {
     }
 
     const payment = await Payment.findOneAndUpdate(
-      { order: order._id, status: "created", activeAttemptKey: String(order._id) },
+      { order: order._id, status: "created" },
       {
         $set: {
           gateway: Payment.ACTIVE_GATEWAY || "cashfree",
