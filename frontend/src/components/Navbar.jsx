@@ -90,7 +90,8 @@ function CompareLiveRegion() {
   );
 }
 
-export default function Navbar({ logo = "RNS INFOTECH", links = [], cta = null }) {
+export default function Navbar({ logo = "RNS INFOTECH", links = [], cta }) {
+  cta = cta || { label: "Book a demo", href: "/demo" };
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
