@@ -32,9 +32,7 @@ const updateBlogPostSchema = createBlogPostSchema.partial();
 
 const updatePolicySchema = z.object({
   updated: z.string().trim().max(50).optional(),
-  intro: z.string().trim().max(20000).optional(),
-  sections: z.array(z.object({ title: z.string().trim().min(1), body: z.string().trim().min(1) })).optional(),
-  coverage: z.array(z.object({ categoryId: z.string().trim().min(1), categoryLabel: z.string().trim().min(1), duration: z.string().trim().min(1), note: z.string().trim().min(1) })).optional(),
+  description: z.string().max(50000).optional(),
 }).partial();
 
 module.exports = {

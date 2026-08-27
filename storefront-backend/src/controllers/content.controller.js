@@ -84,9 +84,7 @@ const getPolicy = asyncHandler(async (req, res) => {
   if (!doc) throw ApiError.notFound("Policy not found.");
   const content = doc.published || {
     updated: doc.updated || "",
-    intro: doc.intro || "",
-    sections: doc.sections || [],
-    ...(doc.coverage ? { coverage: doc.coverage } : {}),
+    description: typeof doc.description === "string" ? doc.description : [doc.intro, ...(Array.isArray(doc.sections) ? doc.sections.map((s) => `${s.title || ""}\n\n${s.body || ""}`) : [])].filter(Boolean).join("\n\n"),
   };
   res.json({ policy: { key: doc.key, ...content, publishedAt: doc.publishedAt || null } });
 });

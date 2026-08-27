@@ -4,7 +4,7 @@ const Faq = require("../models/Faq");
 const BlogPost = require("../models/BlogPost");
 const Policy = require("../models/Policy");
 
-const POLICY_KEYS = ["privacy", "returns", "terms", "warranty", "shipping"];
+const POLICY_KEYS = ["privacy", "returns", "terms", "warranty"];
 
 function normalizeFaq(doc) {
   return {
@@ -46,16 +46,31 @@ function normalizeBlog(doc) {
   };
 }
 
+function legacyDescription(value = {}) {
+  if (typeof value.description === "string") return value.description;
+  const intro = typeof value.intro === "string" ? value.intro : "";
+  const sections = Array.isArray(value.sections) ? value.sections : [];
+  if (!sections.length) return intro;
+  return [intro, ...sections.map((section) => {
+    const title = String(section?.title || "").trim();
+    const body = String(section?.body || "").trim();
+    return title && body ? `${title}\n\n${body}` : body || title;
+  }).filter(Boolean)].filter(Boolean).join("\n\n");
+}
+
 function policyContentFromDoc(doc, source = "draft") {
-  if (!doc) return { updated: "August 2026", intro: "", sections: [] };
+  if (!doc) return { updated: "August 2026", description: "" };
   const candidate = doc[source];
-  const hasContent = candidate && (candidate.updated || candidate.intro || (Array.isArray(candidate.sections) && candidate.sections.length) || (Array.isArray(candidate.coverage) && candidate.coverage.length));
-  const value = hasContent ? candidate : (source === "published" ? null : doc);
+  const candidateHasContent = candidate && (candidate.updated || typeof candidate.description === "string" || candidate.intro || (Array.isArray(candidate.sections) && candidate.sections.length));
+  const value = candidateHasContent ? candidate : (source === "published" ? null : doc);
   if (value) {
     const obj = value.toObject ? value.toObject() : value;
-    return { ...obj };
+    return {
+      updated: obj.updated || doc.updated || "August 2026",
+      description: legacyDescription(obj),
+    };
   }
-  return { updated: doc.updated || "August 2026", intro: doc.intro || "", sections: doc.sections || [], ...(doc.coverage ? { coverage: doc.coverage } : {}) };
+  return { updated: doc.updated || "August 2026", description: legacyDescription(doc) };
 }
 
 function normalizePolicy(doc) {
@@ -160,14 +175,14 @@ const getPolicies = asyncHandler(async (req, res) => {
   const policies = {};
   docs.forEach((doc) => { policies[doc.key] = normalizePolicy(doc); });
   POLICY_KEYS.forEach((key) => {
-    if (!policies[key]) policies[key] = { key, status: "draft", publishedAt: null, draft: { updated: "August 2026", intro: "", sections: [] }, published: null };
+    if (!policies[key]) policies[key] = { key, status: "draft", publishedAt: null, draft: { updated: "August 2026", description: "" }, published: null };
   });
   res.json({ policies });
 });
 
 const updatePolicy = asyncHandler(async (req, res) => {
   if (!POLICY_KEYS.includes(req.params.key)) throw ApiError.notFound("Policy not found.");
-  const draft = { updated: req.body.updated || "August 2026", intro: req.body.intro || "", sections: req.body.sections || [], ...(req.body.coverage ? { coverage: req.body.coverage } : {}) };
+  const draft = { updated: req.body.updated || "August 2026", description: typeof req.body.description === "string" ? req.body.description : legacyDescription(req.body) };
   const policy = await Policy.findOneAndUpdate(
     { key: req.params.key },
     { $set: { key: req.params.key, draft, status: "draft" } },
@@ -180,12 +195,12 @@ const publishPolicy = asyncHandler(async (req, res) => {
   if (!POLICY_KEYS.includes(req.params.key)) throw ApiError.notFound("Policy not found.");
   const policy = await Policy.findOne({ key: req.params.key });
   if (!policy) throw ApiError.notFound("Policy not found.");
-  const draft = policy.draft || { updated: policy.updated, intro: policy.intro, sections: policy.sections, coverage: policy.coverage };
+  const draft = policyContentFromDoc(policy, "draft");
   policy.published = draft;
   policy.updated = draft.updated;
-  policy.intro = draft.intro;
-  policy.sections = draft.sections;
-  policy.coverage = draft.coverage;
+  policy.intro = draft.description;
+  policy.sections = [];
+  policy.coverage = undefined;
   policy.status = "published";
   policy.publishedAt = new Date();
   await policy.save();

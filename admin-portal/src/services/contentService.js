@@ -34,9 +34,7 @@ function normalizeBlog(post = {}) {
 function normalizePolicy(policy = {}) {
   const draft = policy.draft || {
     updated: policy.updated || "August 2026",
-    intro: policy.intro || "",
-    sections: Array.isArray(policy.sections) ? policy.sections : [],
-    ...(Array.isArray(policy.coverage) ? { coverage: policy.coverage } : {}),
+    description: typeof policy.description === "string" ? policy.description : [policy.intro, ...(Array.isArray(policy.sections) ? policy.sections.map((s) => `${s.title || ""}\n\n${s.body || ""}`) : [])].filter(Boolean).join("\n\n"),
   };
   return {
     key: policy.key,
@@ -44,9 +42,7 @@ function normalizePolicy(policy = {}) {
     publishedAt: policy.publishedAt || null,
     draft: {
       updated: draft.updated || "August 2026",
-      intro: draft.intro || "",
-      sections: Array.isArray(draft.sections) ? draft.sections : [],
-      ...(Array.isArray(draft.coverage) ? { coverage: draft.coverage } : {}),
+      description: typeof draft.description === "string" ? draft.description : "",
     },
     published: policy.published || null,
   };
