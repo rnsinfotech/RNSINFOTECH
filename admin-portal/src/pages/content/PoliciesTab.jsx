@@ -66,7 +66,7 @@ export default function PoliciesTab() {
         ))}
       </div>
 
-      {toast && <Toast message={toast} onClose={clearToast} />}
+      {toast?.message && <Toast message={toast.message} tone={toast.tone} onClose={clearToast} />}
 
       <form onSubmit={handleSubmit} className="admin-card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 }}>
