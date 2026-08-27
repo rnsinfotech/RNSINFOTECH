@@ -11,11 +11,11 @@ const REFRESH_AFTER_MS = 30_000;
 // MOCK_DATA_CLEANUP_PROGRESS.md).
 const defaultSupport = {
   email: "support@rnsinfotech.in",
-  phone: "+91 98765 43210",
+  phone: "+91 98114 71499",
   // Digits-only, country code first — the format wa.me links require.
-  whatsapp: "919876543210",
+  whatsapp: "919811471499",
   hours: "Mon–Sat, 10:00 AM – 7:00 PM IST",
-  address: "RNS INFOTECH, MG Road, Bengaluru, Karnataka 560001",
+  address: "711, Eros Apartment, Building No. 56, Nehru Place, New Delhi, Delhi 110019",
   emailResponseTime: "Usually within 24 hours",
   chatResponseTime: "Usually within a few minutes during business hours",
 };

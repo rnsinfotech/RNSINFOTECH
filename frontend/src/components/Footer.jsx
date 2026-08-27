@@ -119,7 +119,7 @@ function NewsletterForm({ newsletter }) {
   );
 }
 
-export default function Footer({ logo, about, columns, legal, newsletter, social, whyChooseUs = [] }) {
+export default function Footer({ logo = "RNS INFOTECH", about = "", columns = [], legal = [], newsletter = null, social = [], whyChooseUs = [] }) {
   const { support } = useSiteSettings();
   return (
     <footer style={{ background: "var(--rns-bg-ink)", color: "#c7cbd6", position: "relative" }}>

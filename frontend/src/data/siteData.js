@@ -142,6 +142,11 @@ export const footer = {
   ],
 };
 
+// Legacy compatibility defaults. Product/download data is now API-driven,
+// but these exports remain so older components cannot attempt .map() on undefined.
+export const products = [];
+export const downloads = [];
+
 export const requestQuote = {
   eyebrow: "Buying for a team or studio?",
   title: "Request a quote",

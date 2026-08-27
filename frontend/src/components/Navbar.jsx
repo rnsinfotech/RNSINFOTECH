@@ -90,7 +90,7 @@ function CompareLiveRegion() {
   );
 }
 
-export default function Navbar({ logo, links, cta }) {
+export default function Navbar({ logo = "RNS INFOTECH", links = [], cta = null }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);

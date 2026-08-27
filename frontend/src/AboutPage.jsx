@@ -65,7 +65,7 @@ export default function AboutPage() {
                 flexWrap: "wrap",
               }}
             >
-              {website.hero.stats.map((s) => (
+              {(Array.isArray(website.hero.stats) ? website.hero.stats : []).map((s) => (
                 <div key={s.label}>
                   <div style={{ fontFamily: "var(--rns-font-display)", fontSize: 26, fontWeight: 700 }}>{s.value}</div>
                   <div style={{ fontSize: 13, color: "var(--rns-ink-faint)", marginTop: 4 }}>{s.label}</div>
