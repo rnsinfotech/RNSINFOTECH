@@ -44,8 +44,6 @@ function normalizeBlog(post = {}) {
 }
 
 export async function getPolicyContent(key) {
-  // Policy pages are published CMS snapshots. Always fetch the current
-  // version so a newly published policy is visible immediately.
-  const payload = await apiRequest(`/policies/${key}`, { cache: "no-store" });
+  const payload = await apiRequest(`/policies/${key}`);
   return payload?.policy || null;
 }

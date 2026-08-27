@@ -4,7 +4,7 @@ const Faq = require("../models/Faq");
 const BlogPost = require("../models/BlogPost");
 const Policy = require("../models/Policy");
 
-const POLICY_KEYS = ["privacy", "returns", "terms", "warranty"];
+const POLICY_KEYS = ["privacy", "returns", "terms", "warranty", "shipping"];
 
 function normalizeFaq(doc) {
   return {

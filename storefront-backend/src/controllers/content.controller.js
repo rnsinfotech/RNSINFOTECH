@@ -80,13 +80,6 @@ const getBlogPost = asyncHandler(async (req, res) => {
 
 const getPolicy = asyncHandler(async (req, res) => {
   if (!POLICY_KEYS.includes(req.params.key)) throw ApiError.notFound("Policy not found.");
-
-  // Policies are CMS-managed content. Never let a browser, CDN, or proxy
-  // serve an older published snapshot after an admin publishes a change.
-  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-  res.set("Pragma", "no-cache");
-  res.set("Expires", "0");
-
   const doc = await Policy.findOne({ key: req.params.key, status: "published" }).lean();
   if (!doc) throw ApiError.notFound("Policy not found.");
   const content = doc.published || {
