@@ -109,7 +109,7 @@ function userFacingApiMessage(status, payload, fallback = "We couldn't complete 
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function apiRequest(path, { method = "GET", body, token, headers = {}, authRequired = false, timeoutMs = 15000, retry = true, retryOnUnauthorized = true } = {}) {
+export async function apiRequest(path, { method = "GET", body, token, headers = {}, authRequired = false, timeoutMs = 15000, retry = true, retryOnUnauthorized = true, cache = "default" } = {}) {
   const url = path.startsWith("http") ? path : `${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
   const config = { method, headers: { ...headers }, signal: undefined };
   if (authRequired || token) {
@@ -127,7 +127,7 @@ export async function apiRequest(path, { method = "GET", body, token, headers = 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const response = await fetch(url, { ...config, signal: controller.signal });
+      const response = await fetch(url, { ...config, signal: controller.signal, cache });
       clearTimeout(timer);
       const contentType = response.headers.get("content-type") || "";
       const payload = contentType.includes("application/json") ? await response.json().catch(() => null) : null;
