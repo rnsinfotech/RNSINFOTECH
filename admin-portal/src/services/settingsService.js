@@ -32,11 +32,17 @@ export function getLowStockThresholdSync() {
 
 export async function getAccount() {
   const payload = await adminApiRequest("/settings/account");
+  if (payload?.account) {
+    setStoredAdminAuth({ admin: payload.account });
+  }
   return payload?.account || getStoredAdminAuth().admin || null;
 }
 
 export async function updateAccount(data) {
   const payload = await adminApiRequest("/settings/account", { method: "PATCH", body: data });
+  if (payload?.account) {
+    setStoredAdminAuth({ admin: payload.account });
+  }
   return payload?.account || getStoredAdminAuth().admin || null;
 }
 

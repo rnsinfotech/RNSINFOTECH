@@ -23,6 +23,7 @@ vi.mock("../lib/adminApi", () => {
 });
 
 vi.mock("../services/settingsService", () => ({
+  getAccount: vi.fn(async () => ({ id: "admin1", name: "Test Admin", role: "Owner" })),
   getAccountSync: vi.fn(() => ({ id: "admin1", name: "Test Admin", role: "Owner" })),
 }));
 

@@ -272,6 +272,49 @@ input[type="radio"] {
   box-shadow: inset 3px 0 0 var(--rns-primary);
 }
 
+.admin-sidebar__profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  margin-top: auto;
+  border-top: 1px solid var(--admin-sidebar-hover);
+  border-radius: var(--rns-r-sm);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-sidebar__profile-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--rns-primary);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.admin-sidebar__profile-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-sidebar__profile-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-sidebar__profile-role {
+  font-size: 11px;
+  color: var(--admin-sidebar-ink-dim);
+}
+
 .admin-sidebar__collapse-btn {
   display: flex;
   align-items: center;
@@ -305,6 +348,7 @@ input[type="radio"] {
 .is-collapsed .admin-sidebar__brand-sub,
 .is-collapsed .admin-nav__label,
 .is-collapsed .admin-nav__group-label,
+.is-collapsed .admin-sidebar__profile-info,
 .is-collapsed .admin-sidebar__collapse-btn span {
   display: none;
 }
@@ -317,6 +361,11 @@ input[type="radio"] {
 .is-collapsed .admin-nav__link {
   justify-content: center;
   padding: 9px;
+}
+
+.is-collapsed .admin-sidebar__profile {
+  justify-content: center;
+  padding: 8px 0;
 }
 
 .is-collapsed .admin-sidebar__collapse-btn {
@@ -2326,8 +2375,16 @@ select.admin-select {
     padding-left: 8px;
   }
 
-  .admin-topbar__profile-text {
-    display: none !important;
+  .admin-topbar__profile-role {
+    display: none;
+  }
+
+  .admin-topbar__profile-name {
+    max-width: 85px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .admin-topbar-search__panel,

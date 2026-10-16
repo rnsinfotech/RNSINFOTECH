@@ -2,15 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Icon from "../components/Icon";
 import { navItemsFlat } from "../config/navConfig";
-import { getAccountSync } from "../services/settingsService";
+import { getAccount, getAccountSync } from "../services/settingsService";
 import { adminLogout } from "../lib/adminApi";
 import TopbarSearch from "./TopbarSearch";
 import TopbarNotifications from "./TopbarNotifications";
 
-function initials(name) {
+function initials(name, role) {
   const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  return (parts[0][0] + (parts[1]?.[0] || "")).toUpperCase();
+  if (parts.length === 0) return role === "Owner" ? "OW" : "AD";
+  return (parts[0][0] + (parts[1]?.[0] || parts[0][1] || "")).toUpperCase();
 }
 
 function currentTitle(pathname) {
@@ -24,12 +24,28 @@ export default function Topbar({ onMenuClick }) {
   const location = useLocation();
   const [account, setAccount] = useState(() => getAccountSync() || {});
 
-  // Re-read on every route change (a plain sync localStorage read, no
-  // fetch) so navigating away from Settings after a save picks up the
-  // new name/role immediately, without needing a page reload.
   useEffect(() => {
-    setAccount(getAccountSync() || {});
+    let alive = true;
+    const syncAccount = getAccountSync();
+    if (syncAccount) setAccount(syncAccount);
+
+    getAccount()
+      .then((acc) => {
+        if (alive && acc) {
+          setAccount(acc);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      alive = false;
+    };
   }, [location.pathname]);
+
+  const displayName =
+    account.name ||
+    (account.role === "Owner" ? "Store Owner" : account.role ? `${account.role} Admin` : "Admin");
+  const displayRole = account.role || "Owner";
 
   return (
     <header className="admin-topbar">
@@ -49,11 +65,11 @@ export default function Topbar({ onMenuClick }) {
       <div className="admin-topbar__right">
         <TopbarSearch />
         <TopbarNotifications />
-        <div className="admin-topbar__profile">
-          <div className="admin-topbar__avatar">{initials(account.name)}</div>
+        <div className="admin-topbar__profile" title={`${displayName} (${displayRole})`}>
+          <div className="admin-topbar__avatar">{initials(displayName, displayRole)}</div>
           <div className="admin-topbar__profile-text">
-            <div className="admin-topbar__profile-name">{account.name || "Admin"}</div>
-            <div className="admin-topbar__profile-role">{account.role || "Staff"}</div>
+            <div className="admin-topbar__profile-name">{displayName}</div>
+            <div className="admin-topbar__profile-role">{displayRole}</div>
           </div>
         </div>
         <button

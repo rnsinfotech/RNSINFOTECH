@@ -4,8 +4,17 @@ import Icon from "../components/Icon";
 import { navConfig } from "../config/navConfig";
 import { getStoredAdminAuth } from "../lib/adminApi";
 
+function initials(name, role) {
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return role === "Owner" ? "OW" : "AD";
+  return (parts[0][0] + (parts[1]?.[0] || parts[0][1] || "")).toUpperCase();
+}
+
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile }) {
-  const role = getStoredAdminAuth().admin?.role || "Staff";
+  const admin = getStoredAdminAuth().admin || {};
+  const role = admin.role || "Owner";
+  const displayName = admin.name || (role === "Owner" ? "Store Owner" : "Admin");
+
   return (
     <aside className={`admin-sidebar${mobileOpen ? " is-mobile-open" : ""}`}>
       <div className="admin-sidebar__brand">
@@ -52,6 +61,14 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
           </div>
         ))}
       </nav>
+
+      <div className="admin-sidebar__profile" title={`${displayName} (${role})`}>
+        <div className="admin-sidebar__profile-avatar">{initials(displayName, role)}</div>
+        <div className="admin-sidebar__profile-info">
+          <div className="admin-sidebar__profile-name">{displayName}</div>
+          <div className="admin-sidebar__profile-role">{role}</div>
+        </div>
+      </div>
 
       <button className="admin-sidebar__collapse-btn" onClick={onToggle} type="button">
         <Icon name={collapsed ? "chevron" : "chevronLeft"} size={15} />
