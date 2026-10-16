@@ -37,7 +37,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="admin-grid" style={{ gridTemplateColumns: "1.6fr 1fr", marginBottom: 16 }}>
+      <div className="admin-grid admin-grid--split" style={{ marginBottom: 16 }}>
         <div className="admin-card">
           <h3 style={{ fontSize: 14, marginBottom: 14 }}>Sales this week</h3>
           <ResponsiveContainer width="100%" height={220}>
@@ -70,31 +70,33 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="admin-grid" style={{ gridTemplateColumns: "1.6fr 1fr" }}>
+      <div className="admin-grid admin-grid--split">
         <div className="admin-card" style={{ padding: 0 }}>
           <h3 style={{ fontSize: 14, padding: "18px 18px 4px" }}>Recent orders</h3>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead>
-              <tr style={{ textAlign: "left", color: "var(--admin-ink-faint)", fontSize: 11.5 }}>
-                <th style={{ padding: "10px 18px", fontWeight: 600 }}>Order</th>
-                <th style={{ padding: "10px 18px", fontWeight: 600 }}>Customer</th>
-                <th style={{ padding: "10px 18px", fontWeight: 600 }}>Total</th>
-                <th style={{ padding: "10px 18px", fontWeight: 600 }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.recentOrders.map((o) => (
-                <tr key={o.id} style={{ borderTop: "1px solid var(--admin-line)" }}>
-                  <td style={{ padding: "12px 18px", fontWeight: 600 }}>{o.id}</td>
-                  <td style={{ padding: "12px 18px" }}>{o.customer}</td>
-                  <td style={{ padding: "12px 18px" }}>{o.total}</td>
-                  <td style={{ padding: "12px 18px" }}>
-                    <Badge tone={STATUS_TONE[o.status]}>{statusLabel(o.status)}</Badge>
-                  </td>
+          <div className="admin-table-wrap">
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ textAlign: "left", color: "var(--admin-ink-faint)", fontSize: 11.5 }}>
+                  <th style={{ padding: "10px 18px", fontWeight: 600 }}>Order</th>
+                  <th style={{ padding: "10px 18px", fontWeight: 600 }}>Customer</th>
+                  <th style={{ padding: "10px 18px", fontWeight: 600 }}>Total</th>
+                  <th style={{ padding: "10px 18px", fontWeight: 600 }}>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.recentOrders.map((o) => (
+                  <tr key={o.id} style={{ borderTop: "1px solid var(--admin-line)" }}>
+                    <td style={{ padding: "12px 18px", fontWeight: 600 }}>{o.id}</td>
+                    <td style={{ padding: "12px 18px" }}>{o.customer}</td>
+                    <td style={{ padding: "12px 18px" }}>{o.total}</td>
+                    <td style={{ padding: "12px 18px" }}>
+                      <Badge tone={STATUS_TONE[o.status]}>{statusLabel(o.status)}</Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="admin-card">

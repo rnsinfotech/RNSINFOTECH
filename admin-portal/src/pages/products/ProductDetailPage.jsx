@@ -96,7 +96,7 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      <div className="admin-grid" style={{ gridTemplateColumns: "1.6fr 1fr" }}>
+      <div className="admin-grid admin-grid--split">
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {product.shortDescription && (
             <div className="admin-card">

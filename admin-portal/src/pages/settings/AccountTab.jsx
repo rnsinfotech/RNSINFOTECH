@@ -39,7 +39,7 @@ export default function AccountTab() {
       <p style={{ fontSize: 12.5, color: "var(--admin-ink-faint)", marginBottom: 14 }}>
         Your account details are loaded from the authenticated admin session.
       </p>
-      <div style={{ display: "grid", gap: 14, gridTemplateColumns: "1fr 1fr" }}>
+      <div className="admin-form-grid">
         <FormField label="Display name" htmlFor="acc-name" required>
           <input id="acc-name" className="admin-input" value={form.name} onChange={(e) => set("name", e.target.value)} />
         </FormField>

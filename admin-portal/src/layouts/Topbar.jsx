@@ -33,13 +33,12 @@ export default function Topbar({ onMenuClick }) {
 
   return (
     <header className="admin-topbar">
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <div className="admin-topbar__left">
         <button
-          className="admin-topbar__icon-btn"
+          className="admin-topbar__icon-btn admin-topbar__menu-btn"
           onClick={onMenuClick}
           type="button"
-          aria-label="Toggle sidebar"
-          style={{ display: "none" }}
+          aria-label="Toggle navigation"
           id="admin-mobile-menu-btn"
         >
           <Icon name="menu" size={18} />
@@ -52,7 +51,7 @@ export default function Topbar({ onMenuClick }) {
         <TopbarNotifications />
         <div className="admin-topbar__profile">
           <div className="admin-topbar__avatar">{initials(account.name)}</div>
-          <div>
+          <div className="admin-topbar__profile-text">
             <div className="admin-topbar__profile-name">{account.name || "Admin"}</div>
             <div className="admin-topbar__profile-role">{account.role || "Staff"}</div>
           </div>

@@ -52,7 +52,7 @@ export default function CommerceTab() {
       <p style={{ fontSize: 12.5, color: "var(--admin-ink-faint)", marginBottom: 14 }}>
         These persisted commerce rules are used by the storefront backend pricing engine.
       </p>
-      <div style={{ display: "grid", gap: 14, gridTemplateColumns: "1fr 1fr" }}>
+      <div className="admin-form-grid">
         <FormField label="Free shipping above" htmlFor="cs-threshold" hint="Order subtotal, in ₹.">
           <input
             id="cs-threshold"
@@ -80,7 +80,7 @@ export default function CommerceTab() {
         <p style={{ fontSize: 12.5, color: "var(--admin-ink-faint)", marginBottom: 14 }}>
           These values are persisted and used by the backend pricing engine for quotes, orders and payments.
         </p>
-        <div style={{ display: "grid", gap: 14, gridTemplateColumns: "1fr 1fr" }}>
+        <div className="admin-form-grid">
           <FormField label="GST rate" htmlFor="cs-tax" hint="GST percentage, e.g. 18 for 18%. Product prices are treated as GST-exclusive.">
             <input id="cs-tax" type="number" min="0" step="0.01" className="admin-input"
               value={form.taxRate ?? 0} onChange={(e) => set("taxRate", e.target.value)} />

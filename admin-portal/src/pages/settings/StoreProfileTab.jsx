@@ -44,7 +44,7 @@ export default function StoreProfileTab() {
       <p style={{ fontSize: 12.5, color: "var(--admin-ink-faint)", marginBottom: 14 }}>
         Persisted in MongoDB and used by the storefront's Help page, footer, and invoice data.
       </p>
-      <div style={{ display: "grid", gap: 14, gridTemplateColumns: "1fr 1fr" }}>
+      <div className="admin-form-grid">
         <FormField label="Display name" htmlFor="sp-name" required>
           <input id="sp-name" className="admin-input" value={form.name} onChange={(e) => set("name", e.target.value)} />
         </FormField>

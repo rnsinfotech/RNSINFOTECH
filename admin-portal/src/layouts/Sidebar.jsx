@@ -4,18 +4,28 @@ import Icon from "../components/Icon";
 import { navConfig } from "../config/navConfig";
 import { getStoredAdminAuth } from "../lib/adminApi";
 
-export default function Sidebar({ collapsed, onToggle }) {
+export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile }) {
   const role = getStoredAdminAuth().admin?.role || "Staff";
   return (
-    <aside className="admin-sidebar">
+    <aside className={`admin-sidebar${mobileOpen ? " is-mobile-open" : ""}`}>
       <div className="admin-sidebar__brand">
         <div className="admin-sidebar__brand-mark">
           <img src="/rns_logo.jpg" alt="" className="admin-sidebar__brand-logo" />
         </div>
-        <div>
+        <div className="admin-sidebar__brand-info">
           <div className="admin-sidebar__brand-text">RNS INFOTECH</div>
           <div className="admin-sidebar__brand-sub">Admin Portal</div>
         </div>
+        {onCloseMobile && (
+          <button
+            className="admin-sidebar__close-btn"
+            onClick={onCloseMobile}
+            type="button"
+            aria-label="Close navigation"
+          >
+            <Icon name="close" size={16} />
+          </button>
+        )}
       </div>
 
       <nav className="admin-nav" aria-label="Admin navigation">
@@ -29,6 +39,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                 end={item.path === "/"}
                 className={({ isActive }) => `admin-nav__link${isActive ? " is-active" : ""}`}
                 title={collapsed ? item.label : undefined}
+                onClick={onCloseMobile}
               >
                 <Icon name={item.icon} size={17} />
                 <span className="admin-nav__label">{item.label}</span>

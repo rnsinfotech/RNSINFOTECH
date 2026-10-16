@@ -102,7 +102,7 @@ export default function PaymentDetailPage() {
         </div>
       </div>
 
-      <div className="admin-grid" style={{ gridTemplateColumns: "1.6fr 1fr" }}>
+      <div className="admin-grid admin-grid--split">
         <div className="admin-card">
           <h3 style={{ fontSize: 14, marginBottom: 12 }}>Payment details</h3>
           <div className="admin-kv-list">

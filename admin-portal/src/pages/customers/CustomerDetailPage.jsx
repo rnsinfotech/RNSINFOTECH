@@ -66,7 +66,7 @@ export default function CustomerDetailPage() {
         </div>
       </div>
 
-      <div className="admin-grid" style={{ gridTemplateColumns: "1.6fr 1fr" }}>
+      <div className="admin-grid admin-grid--split">
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="admin-card" style={{ padding: 0 }}>
             <h3 style={{ fontSize: 14, padding: "16px 16px 0" }}>Order history</h3>
