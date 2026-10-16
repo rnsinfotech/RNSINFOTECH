@@ -16,7 +16,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
           <div className="admin-sidebar__brand-text">RNS INFOTECH</div>
           <div className="admin-sidebar__brand-sub">Admin Portal</div>
         </div>
-        {onCloseMobile && (
+        {mobileOpen && onCloseMobile && (
           <button
             className="admin-sidebar__close-btn"
             onClick={onCloseMobile}
@@ -39,7 +39,11 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
                 end={item.path === "/"}
                 className={({ isActive }) => `admin-nav__link${isActive ? " is-active" : ""}`}
                 title={collapsed ? item.label : undefined}
-                onClick={onCloseMobile}
+                onClick={() => {
+                  if (typeof window !== "undefined" && window.innerWidth <= 768 && onCloseMobile) {
+                    onCloseMobile();
+                  }
+                }}
               >
                 <Icon name={item.icon} size={17} />
                 <span className="admin-nav__label">{item.label}</span>
