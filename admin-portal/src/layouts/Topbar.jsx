@@ -8,8 +8,9 @@ import TopbarSearch from "./TopbarSearch";
 import TopbarNotifications from "./TopbarNotifications";
 
 function initials(name, role) {
+  if (name === "Store Owner") return "SO";
   const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return role === "Owner" ? "OW" : "AD";
+  if (parts.length === 0) return role === "Owner" ? "SO" : "AD";
   return (parts[0][0] + (parts[1]?.[0] || parts[0][1] || "")).toUpperCase();
 }
 
@@ -42,9 +43,15 @@ export default function Topbar({ onMenuClick }) {
     };
   }, [location.pathname]);
 
+  const isEmailName = account.name && (account.name.includes("@") || account.name === account.email);
   const displayName =
-    account.name ||
-    (account.role === "Owner" ? "Store Owner" : account.role ? `${account.role} Admin` : "Admin");
+    account.name && !isEmailName
+      ? account.name
+      : account.role === "Owner"
+      ? "Store Owner"
+      : account.role
+      ? `${account.role} Admin`
+      : "Admin";
   const displayRole = account.role || "Owner";
 
   return (

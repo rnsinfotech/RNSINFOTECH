@@ -64,6 +64,9 @@ const createThread = asyncHandler(async (req, res) => {
 
 const appendMessage = asyncHandler(async (req, res) => {
   const { threadId } = req.params;
+  if (!req.chatAuth || req.chatAuth.type !== "customer") {
+    throw ApiError.unauthorized("You must be logged in to send a message.");
+  }
   assertThreadAccess(req, threadId);
   const text = String(req.body.text || "").trim();
   const clientMessageId = req.body.clientMessageId || null;

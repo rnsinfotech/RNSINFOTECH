@@ -11,6 +11,7 @@ import { useLiveChat } from "./context/LiveChatContext";
 
 import { nav, footer } from "./data/siteData";
 import { useSiteSettings } from "./context/SiteSettingsContext";
+import { useAuth } from "./context/AuthContext";
 import { getFaqContent } from "./lib/contentApi";
 import { submitLead } from "./lib/api";
 import { useToast } from "./context/ToastContext";
@@ -52,6 +53,7 @@ function ContactCard({ icon, title, description, action }) {
  */
 export default function HelpPage() {
   const { support } = useSiteSettings();
+  const { currentUser } = useAuth();
   const [faqs, setFaqs] = useState([]);
   const [faqError, setFaqError] = useState(null);
 
@@ -59,10 +61,25 @@ export default function HelpPage() {
     getFaqContent().then(setFaqs).catch(setFaqError);
   }, []);
   const { openChat } = useLiveChat();
-  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [form, setForm] = useState({
+    name: currentUser?.name || "",
+    email: currentUser?.email || "",
+    subject: "",
+    message: "",
+  });
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const toast = useToast();
+
+  useEffect(() => {
+    if (currentUser) {
+      setForm((prev) => ({
+        ...prev,
+        name: prev.name || currentUser.name || "",
+        email: prev.email || currentUser.email || "",
+      }));
+    }
+  }, [currentUser]);
 
   function updateField(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -70,6 +87,10 @@ export default function HelpPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!currentUser) {
+      toast.error("Please log in to send a message.");
+      return;
+    }
     setSubmitting(true);
     try {
       await submitLead({
@@ -205,51 +226,93 @@ export default function HelpPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="rns-card" style={{ padding: 24, marginTop: 16, display: "grid", gap: 14 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          {currentUser ? (
+            <form onSubmit={handleSubmit} className="rns-card" style={{ padding: 24, marginTop: 16, display: "grid", gap: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                <div>
+                  <label style={{ display: "block", fontSize: 12.5, color: "var(--rns-ink-soft)", marginBottom: 6 }}>Name</label>
+                  <input
+                    required
+                    value={form.name}
+                    onChange={(e) => updateField("name", e.target.value)}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: "1px solid var(--rns-line-strong)", fontSize: 13.5 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: 12.5, color: "var(--rns-ink-soft)", marginBottom: 6 }}>Email</label>
+                  <input
+                    required
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => updateField("email", e.target.value)}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: "1px solid var(--rns-line-strong)", fontSize: 13.5 }}
+                  />
+                </div>
+              </div>
               <div>
-                <label style={{ display: "block", fontSize: 12.5, color: "var(--rns-ink-soft)", marginBottom: 6 }}>Name</label>
+                <label style={{ display: "block", fontSize: 12.5, color: "var(--rns-ink-soft)", marginBottom: 6 }}>Subject</label>
                 <input
                   required
-                  value={form.name}
-                  onChange={(e) => updateField("name", e.target.value)}
+                  value={form.subject}
+                  onChange={(e) => updateField("subject", e.target.value)}
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: "1px solid var(--rns-line-strong)", fontSize: 13.5 }}
                 />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12.5, color: "var(--rns-ink-soft)", marginBottom: 6 }}>Email</label>
-                <input
+                <label style={{ display: "block", fontSize: 12.5, color: "var(--rns-ink-soft)", marginBottom: 6 }}>Message</label>
+                <textarea
                   required
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => updateField("email", e.target.value)}
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: "1px solid var(--rns-line-strong)", fontSize: 13.5 }}
+                  rows={5}
+                  value={form.message}
+                  onChange={(e) => updateField("message", e.target.value)}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: "1px solid var(--rns-line-strong)", fontSize: 13.5, fontFamily: "var(--rns-font-body)", resize: "vertical" }}
                 />
               </div>
+              <button type="submit" disabled={submitting} className="rns-btn rns-btn--primary" style={{ justifyContent: "center" }}>
+                {submitting ? "Sending…" : "Send message"}
+              </button>
+            </form>
+          ) : (
+            <div
+              className="rns-card"
+              style={{
+                padding: "36px 24px",
+                marginTop: 16,
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "50%",
+                  background: "var(--rns-primary-tint)",
+                  color: "var(--rns-primary)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Icon name="user" size={22} />
+              </div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Sign in to send a message</div>
+              <p style={{ fontSize: 13.5, color: "var(--rns-ink-soft)", maxWidth: 360, margin: 0, lineHeight: 1.5 }}>
+                Please log in to your account to send a message to our support team and receive a response.
+              </p>
+              <div style={{ display: "flex", gap: 10, marginTop: 6, flexWrap: "wrap", justifyContent: "center" }}>
+                <Link to="/login" state={{ from: "/help" }} className="rns-btn rns-btn--primary">
+                  Log in to continue
+                </Link>
+                <Link to="/signup" state={{ from: "/help" }} className="rns-btn rns-btn--ghost">
+                  Create an account
+                </Link>
+              </div>
             </div>
-            <div>
-              <label style={{ display: "block", fontSize: 12.5, color: "var(--rns-ink-soft)", marginBottom: 6 }}>Subject</label>
-              <input
-                required
-                value={form.subject}
-                onChange={(e) => updateField("subject", e.target.value)}
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: "1px solid var(--rns-line-strong)", fontSize: 13.5 }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 12.5, color: "var(--rns-ink-soft)", marginBottom: 6 }}>Message</label>
-              <textarea
-                required
-                rows={5}
-                value={form.message}
-                onChange={(e) => updateField("message", e.target.value)}
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: "1px solid var(--rns-line-strong)", fontSize: 13.5, fontFamily: "var(--rns-font-body)", resize: "vertical" }}
-              />
-            </div>
-            <button type="submit" disabled={submitting} className="rns-btn rns-btn--primary" style={{ justifyContent: "center" }}>
-              {submitting ? "Sending…" : "Send message"}
-            </button>
-          </form>
+          )}
         </div>
       </section>
 

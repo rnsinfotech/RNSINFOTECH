@@ -5,15 +5,22 @@ import { navConfig } from "../config/navConfig";
 import { getStoredAdminAuth } from "../lib/adminApi";
 
 function initials(name, role) {
+  if (name === "Store Owner") return "SO";
   const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return role === "Owner" ? "OW" : "AD";
+  if (parts.length === 0) return role === "Owner" ? "SO" : "AD";
   return (parts[0][0] + (parts[1]?.[0] || parts[0][1] || "")).toUpperCase();
 }
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile }) {
   const admin = getStoredAdminAuth().admin || {};
   const role = admin.role || "Owner";
-  const displayName = admin.name || (role === "Owner" ? "Store Owner" : "Admin");
+  const isEmailName = admin.name && (admin.name.includes("@") || admin.name === admin.email);
+  const displayName =
+    admin.name && !isEmailName
+      ? admin.name
+      : role === "Owner"
+      ? "Store Owner"
+      : "Admin";
 
   return (
     <aside className={`admin-sidebar${mobileOpen ? " is-mobile-open" : ""}`}>

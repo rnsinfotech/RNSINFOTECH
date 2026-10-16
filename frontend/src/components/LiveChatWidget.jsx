@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import Icon from "./Icon";
 import { useLiveChat } from "../context/LiveChatContext";
 import { useSiteSettings } from "../context/SiteSettingsContext";
+import { useAuth } from "../context/AuthContext";
 
 function formatTime(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -26,6 +28,8 @@ function formatDay(ts) {
 export default function LiveChatWidget() {
   const { open, closeChat, messages, sendMessage } = useLiveChat();
   const { support } = useSiteSettings();
+  const { currentUser } = useAuth();
+  const location = useLocation();
   const [draft, setDraft] = useState("");
   const listRef = useRef(null);
 
@@ -35,7 +39,7 @@ export default function LiveChatWidget() {
 
   function handleSend(e) {
     e.preventDefault();
-    if (!draft.trim()) return;
+    if (!currentUser || !draft.trim()) return;
     sendMessage(draft);
     setDraft("");
   }
@@ -155,17 +159,23 @@ export default function LiveChatWidget() {
             style={{
               alignSelf: "center",
               textAlign: "center",
-              fontSize: 12,
-              color: "var(--rns-ink-faint)",
+              fontSize: 12.5,
+              color: "var(--rns-ink-soft)",
               background: "#fff",
               border: "1px solid var(--rns-line)",
-              borderRadius: 10,
-              padding: "10px 14px",
-              margin: "8px 0",
-              maxWidth: "90%",
+              borderRadius: 12,
+              padding: "16px 16px",
+              margin: "12px 0",
+              maxWidth: "92%",
+              lineHeight: 1.5,
             }}
           >
-            Send us a message and someone from the RNS INFOTECH team will reply here — {support.chatResponseTime.toLowerCase()}.
+            <div style={{ fontWeight: 600, color: "var(--rns-ink)", fontSize: 13, marginBottom: 4 }}>
+              {currentUser ? "Welcome to Support" : "Sign in to chat with support"}
+            </div>
+            {currentUser
+              ? `Send us a message and someone from the RNS INFOTECH team will reply here — ${support.chatResponseTime.toLowerCase()}.`
+              : "Please sign in to your account to send a message to our support team and track replies."}
           </div>
         )}
 
@@ -253,48 +263,100 @@ export default function LiveChatWidget() {
         })}
       </div>
 
-      <form
-        onSubmit={handleSend}
-        style={{ display: "flex", gap: 8, padding: 12, borderTop: "1px solid var(--rns-line)", background: "#fff", flexShrink: 0 }}
-      >
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Type a message…"
-          className="rns-chat-input"
+      {currentUser ? (
+        <form
+          onSubmit={handleSend}
+          style={{ display: "flex", gap: 8, padding: 12, borderTop: "1px solid var(--rns-line)", background: "#fff", flexShrink: 0 }}
+        >
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Type a message…"
+            className="rns-chat-input"
+            style={{
+              flex: 1,
+              padding: "10px 14px",
+              borderRadius: 22,
+              border: "1px solid var(--rns-line-strong)",
+              background: "var(--rns-bg-alt)",
+              fontSize: 13.5,
+              outline: "none",
+              transition: "border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease",
+            }}
+          />
+          <button
+            type="submit"
+            aria-label="Send message"
+            disabled={!draft.trim()}
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: "50%",
+              background: draft.trim() ? "var(--rns-primary)" : "var(--rns-line)",
+              color: "#fff",
+              border: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              cursor: draft.trim() ? "pointer" : "default",
+              transition: "background 0.15s ease, transform 0.1s ease",
+            }}
+          >
+            <Icon name="send" size={15} />
+          </button>
+        </form>
+      ) : (
+        <div
           style={{
-            flex: 1,
-            padding: "10px 14px",
-            borderRadius: 22,
-            border: "1px solid var(--rns-line-strong)",
-            background: "var(--rns-bg-alt)",
-            fontSize: 13.5,
-            outline: "none",
-            transition: "border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease",
-          }}
-        />
-        <button
-          type="submit"
-          aria-label="Send message"
-          disabled={!draft.trim()}
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: "50%",
-            background: draft.trim() ? "var(--rns-primary)" : "var(--rns-line)",
-            color: "#fff",
-            border: "none",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
+            padding: "14px 16px",
+            borderTop: "1px solid var(--rns-line)",
+            background: "#fff",
             flexShrink: 0,
-            cursor: draft.trim() ? "pointer" : "default",
-            transition: "background 0.15s ease, transform 0.1s ease",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+            textAlign: "center",
           }}
         >
-          <Icon name="send" size={15} />
-        </button>
-      </form>
+          <div style={{ fontSize: 13, color: "var(--rns-ink-soft)" }}>
+            Please log in to send a message.
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Link
+              to="/login"
+              state={{ from: location.pathname }}
+              onClick={closeChat}
+              className="rns-btn rns-btn--primary"
+              style={{
+                flex: 1,
+                padding: "9px 12px",
+                fontSize: 13,
+                justifyContent: "center",
+                borderRadius: 8,
+              }}
+            >
+              <Icon name="user" size={14} />
+              Log in
+            </Link>
+            <Link
+              to="/signup"
+              state={{ from: location.pathname }}
+              onClick={closeChat}
+              className="rns-btn rns-btn--ghost"
+              style={{
+                flex: 1,
+                padding: "9px 12px",
+                fontSize: 13,
+                justifyContent: "center",
+                borderRadius: 8,
+              }}
+            >
+              Sign up
+            </Link>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .rns-chat-panel {

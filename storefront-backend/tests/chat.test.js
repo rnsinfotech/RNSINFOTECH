@@ -85,21 +85,31 @@ describe("POST /api/chat/threads (authenticated re-sync)", () => {
 });
 
 describe("POST /api/chat/threads/:threadId/messages", () => {
-  it("appends a customer message to an existing thread", async () => {
+  it("appends a customer message to an existing thread when authenticated", async () => {
     ChatThread.findOne.mockResolvedValue({
-      threadId: "guest_abc",
-      customerName: "Guest",
-      customerEmail: "guest@example.com",
+      threadId: "user_user123",
+      customerName: "Prakhar Sharma",
+      customerEmail: "prakhar@example.com",
       messages: [],
       save: jest.fn().mockResolvedValue(true),
     });
 
     const res = await request(app)
-      .post("/api/chat/threads/guest_abc/messages")
-      .set("x-chat-token", signGuestChatToken("guest_abc"))
+      .post("/api/chat/threads/user_user123/messages")
+      .set("Authorization", authHeader)
       .send({ text: "Need help with delivery" });
 
     expect(res.status).toBe(201);
     expect(res.body.thread.messages).toHaveLength(1);
+  });
+
+  it("rejects message sending from unauthenticated / guest users with 401", async () => {
+    const res = await request(app)
+      .post("/api/chat/threads/guest_abc/messages")
+      .set("x-chat-token", signGuestChatToken("guest_abc"))
+      .send({ text: "Need help with delivery" });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error.message).toMatch(/logged in/i);
   });
 });

@@ -11,22 +11,24 @@ import {
 const LiveChatContext = createContext(null);
 
 export function LiveChatProvider({ children }) {
-  const { currentUser, hydrated } = useAuth();
+  const { currentUser, hydrated, isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
   const [thread, setThread] = useState(null);
   const [loading, setLoading] = useState(false);
   const [chatError, setChatError] = useState(null);
 
   const threadId = useMemo(
-    () => (currentUser ? `user_${currentUser.id}` : `guest_${getOrCreateGuestId()}`),
+    () => (currentUser ? `user_${currentUser.id}` : null),
     [currentUser]
   );
 
-  // Chat is deliberately initialized only after the visitor opens it.
-  // The widget button remains available, but the initial storefront load
-  // does not create a chat thread, open a socket, or make chat requests.
+  // Chat is initialized only after the customer opens it and is logged in.
+  // Visitors who have not logged in cannot initialize or send chat messages.
   useEffect(() => {
-    if (!open || !hydrated) return undefined;
+    if (!open || !hydrated || !currentUser || !threadId) {
+      if (!currentUser) setThread(null);
+      return undefined;
+    }
 
     let active = true;
     setLoading(true);
@@ -34,7 +36,7 @@ export function LiveChatProvider({ children }) {
 
     getOrCreateThread(
       threadId,
-      currentUser?.name || "Guest",
+      currentUser?.name || "Customer",
       currentUser?.email || ""
     )
       .then((nextThread) => {
@@ -53,10 +55,10 @@ export function LiveChatProvider({ children }) {
     return () => {
       active = false;
     };
-  }, [open, hydrated, threadId, currentUser?.name, currentUser?.email]);
+  }, [open, hydrated, threadId, currentUser]);
 
   useEffect(() => {
-    if (!open || !thread) return undefined;
+    if (!open || !thread || !threadId) return undefined;
     return subscribeToChatUpdates(threadId, (update) => {
       setThread((current) => {
         if (!current) return update;
@@ -75,7 +77,7 @@ export function LiveChatProvider({ children }) {
   }, [open, threadId, Boolean(thread)]);
 
   useEffect(() => {
-    if (!open || !thread) return;
+    if (!open || !thread || !threadId) return;
     const hasUnread = thread.messages.some((m) => m.from === "admin" && !m.readByCustomer);
     if (hasUnread) {
       markRead(threadId)
@@ -99,8 +101,12 @@ export function LiveChatProvider({ children }) {
       unreadCount,
       loading,
       chatError,
+      isAuthenticated: Boolean(currentUser),
       sendMessage: async (text) => {
-        if (!text.trim() || !thread) return;
+        if (!currentUser) {
+          throw new Error("You must be logged in to send a message.");
+        }
+        if (!text.trim() || !thread || !threadId) return;
         try {
           const updatedThread = await sendMessage(threadId, text);
           setThread(updatedThread);
@@ -110,7 +116,7 @@ export function LiveChatProvider({ children }) {
         }
       },
     }),
-    [open, thread, unreadCount, threadId, loading, chatError]
+    [open, thread, unreadCount, threadId, loading, chatError, currentUser]
   );
 
   return <LiveChatContext.Provider value={api}>{children}</LiveChatContext.Provider>;
